@@ -1027,6 +1027,8 @@ async function pmDoSubmit(){
   setTimeout(()=>{closePMPanel();btn.textContent='📤 ส่งแบบฟอร์ม PM';btn.disabled=false;},600);
   const r=RAW[pmSelIdx]||[];
   const sm2={ok:'✅ ดำเนินการได้',broken:'🔴 เครื่องชำรุด/รออะไหล่',deface:'🟠 Deface',reschedule:'📅 นัดใหม่',unavailable:'🚫 เจ้าหน้าที่ไม่สะดวกเข้าตรวจ'};
+  const thWarnings2=pmRound==='M'?[]:pmGetThresholdWarnings();
+  const hasDefaceTicks2=pmStatus==='deface' && [1,2,3,4,5].some(n=>{const el=document.getElementById('pm-df'+n);return el&&el.checked;});
   const payload={
     date:document.getElementById('pm-date').value,floor:r[6]||'',zone:r[5]||'',
     location:document.getElementById('pm-location').value,operator:op,
@@ -1036,14 +1038,23 @@ async function pmDoSubmit(){
     checklist:pmStatus==='unavailable'?'-':pmGetChecklist(),work_status:pmStatus,status_label:sm2[pmStatus]||pmStatus,
     deface_reasons:pmStatus==='deface'?pmGetDefaceReasons():'-',
     unavailable_reason:pmStatus==='unavailable'?unavailReason:'-',
+    thresh_warn:thWarnings2.length?'Y':'N',
+    deface_flag:hasDefaceTicks2?'Y':'N',
     remark:document.getElementById('pm-note').value,
     air_before:pmRound==='M'?'':document.getElementById('pm-air-before').value,air_after:pmRound==='M'?'':document.getElementById('pm-air-after').value,
     amp_before:pmRound==='M'?'':document.getElementById('pm-amp-before').value,amp_after:pmRound==='M'?'':document.getElementById('pm-amp-after').value,
     temp_before:pmRound==='M'?'':document.getElementById('pm-temp-before').value,temp_after:pmRound==='M'?'':document.getElementById('pm-temp-after').value,
     photo_machine:pmPhotos[0]||'',photo_asset:pmPhotos[1]||'',photo_location:pmPhotos[2]||''
   };
-  try{await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
-  catch(e){console.warn('GS sync failed:',e.message);}
+  try{
+    const resp=await fetch(GS_PM,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const j=await resp.json();
+    if(!j || j.success!==true) showToast('⚠️ บันทึกในเครื่องแล้ว แต่ซิงค์ขึ้น Sheet ไม่สำเร็จ — ลองใหม่ภายหลัง','warn');
+  }
+  catch(e){
+    console.warn('GS sync failed:',e.message);
+    showToast('⚠️ บันทึกในเครื่องแล้ว แต่ซิงค์ขึ้น Sheet ไม่สำเร็จ (เชื่อมต่อไม่ได้)','warn');
+  }
 }
 
 function showToast(msg,type){
@@ -1561,8 +1572,8 @@ async function loadStatusFromSheet() {
       // สร้าง map จาก machineId → index
       const idxMap = {};
       RAW.forEach((row, i) => { idxMap[row[0]] = i; });
+      const validStatuses = ['ok', 'broken', 'pm', 'reschedule', 'unknown', 'deface', 'unavailable'];
       Object.entries(json.statuses).forEach(([machineId, status]) => {
-        const validStatuses = ['ok', 'broken', 'pm', 'reschedule', 'unknown'];
         if (!validStatuses.includes(status)) return;
         const i = idxMap[machineId];
         if (i === undefined) return;
@@ -1571,8 +1582,24 @@ async function loadStatusFromSheet() {
           changed++;
         }
       });
+      // ซิงค์ "ค่าไม่ผ่านเกณฑ์" (threshWarn) และ Deface flag กลับมาจาก Sheet ด้วย
+      // — เดิมสองค่านี้อยู่ใน localStorage อย่างเดียว ไม่เคยข้ามเครื่องได้เลย
+      if (json.threshWarn && typeof json.threshWarn === 'object'){
+        Object.keys(json.threshWarn).forEach(machineId=>{
+          const i = idxMap[machineId];
+          if (i === undefined) return;
+          if (!threshWarn[i]){ threshWarn[i] = true; changed++; }
+        });
+      }
+      if (json.defaceFlag && typeof json.defaceFlag === 'object'){
+        Object.keys(json.defaceFlag).forEach(machineId=>{
+          const i = idxMap[machineId];
+          if (i === undefined) return;
+          if (!defaceFlag[i]){ defaceFlag[i] = true; changed++; }
+        });
+      }
       if (changed > 0) {
-        saveOverrides();
+        saveOverrides();saveThreshWarn();saveDefaceFlag();
         render();
         updateStats();
       }
