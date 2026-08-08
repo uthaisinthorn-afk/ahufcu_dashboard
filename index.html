@@ -75,7 +75,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .fkey.ok:hover{box-shadow:0 5px 0 var(--ok-shd),0 0 20px rgba(0,255,80,.5)}
 .fkey.broken{background:linear-gradient(180deg,var(--br-top),var(--br-mid));border:1.5px solid var(--br-bdr);box-shadow:0 5px 0 var(--br-shd),0 6px 10px rgba(0,0,0,.6),0 0 14px var(--br-glow)}
 .fkey.broken:hover{box-shadow:0 5px 0 var(--br-shd),0 0 22px rgba(255,50,50,.55)}
-.fkey.pm{background:linear-gradient(180deg,var(--pm-top),var(--pm-mid));border:1.5px solid var(--pm-bdr);box-shadow:0 5px 0 var(--pm-shd),0 6px 10px rgba(0,0,0,.6),0 0 14px var(--pm-glow)}
+.fkey.pm{background:linear-gradient(180deg,#0a2a2e,#06181c);border:1.5px solid #00e5ff;box-shadow:0 5px 0 #005f6e,0 6px 10px rgba(0,0,0,.6),0 0 14px rgba(0,229,255,.4)}
 .fkey.unknown{background:linear-gradient(180deg,var(--un-top),var(--un-mid));border:1.5px solid var(--un-bdr);box-shadow:0 5px 0 var(--un-shd),0 6px 8px rgba(0,0,0,.6)}
 .fkey.unknown:hover{border-color:#3a4a60}
 .fkey:active{transform:translateY(3px)}
@@ -86,17 +86,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .fkey.broken .kdot{background:var(--danger);box-shadow:0 0 5px var(--danger)}
 .fkey.pm .kdot{background:var(--warning);box-shadow:0 0 5px var(--warning)}
 .fkey.unknown .kdot{background:#3a4a60}
-.fkey.reschedule{background:linear-gradient(180deg,#2a1f00,#1a1300);border:1.5px solid #b8860b;box-shadow:0 5px 0 #5a4000,0 6px 10px rgba(0,0,0,.6),0 0 14px rgba(255,200,0,.5)}
-.fkey.reschedule:hover{box-shadow:0 5px 0 #5a4000,0 0 22px rgba(255,200,0,.7)}
-.fkey.reschedule .kdot{background:#ffcc00;box-shadow:0 0 5px #ffcc00;animation:blink .8s infinite}
-.fkey.reschedule .kid{color:#ffee88}
+.fkey.reschedule{background:linear-gradient(180deg,#0f1a3a,#0a1224);border:1.5px solid #3b82f6;box-shadow:0 5px 0 #1e3a8a,0 6px 10px rgba(0,0,0,.6),0 0 14px rgba(59,130,246,.5)}
+.fkey.reschedule:hover{box-shadow:0 5px 0 #1e3a8a,0 0 22px rgba(59,130,246,.7)}
+.fkey.reschedule .kdot{background:#3b82f6;box-shadow:0 0 5px #3b82f6}
+.fkey.reschedule .kid{color:#93c5fd}
+.fkey.unavailable{background:linear-gradient(180deg,#2a0f3a,#180a24);border:1.5px solid #a855f7;box-shadow:0 5px 0 #5b21b6,0 6px 10px rgba(0,0,0,.6),0 0 14px rgba(168,85,247,.5)}
+.fkey.unavailable:hover{box-shadow:0 5px 0 #5b21b6,0 0 22px rgba(168,85,247,.7)}
+.fkey.unavailable .kdot{background:#a855f7;box-shadow:0 0 5px #a855f7;animation:blink .8s infinite}
+.fkey.unavailable .kid{color:#e9d5ff}
 .fkey.deface{background:linear-gradient(180deg,#3a1f00,#241300);border:1.5px solid #ff8800;box-shadow:0 5px 0 #7a3d00,0 6px 10px rgba(0,0,0,.6),0 0 14px rgba(255,136,0,.5)}
 .fkey.deface:hover{box-shadow:0 5px 0 #7a3d00,0 0 22px rgba(255,136,0,.7)}
 .fkey.deface .kdot{background:#ff8800;box-shadow:0 0 5px #ff8800;animation:blink .8s infinite}
 .fkey.deface .kid{color:#ffcc99}
-.fkey.thresh-warn{background:linear-gradient(180deg,#3a2f00,#241c00)!important;border:1.5px solid #ffcc00!important;box-shadow:0 5px 0 #6b5400,0 6px 10px rgba(0,0,0,.6),0 0 16px rgba(255,204,0,.6)!important;animation:warnBlink 1.2s infinite}
-.fkey.thresh-warn .kdot{background:#ffcc00!important;box-shadow:0 0 5px #ffcc00;animation:blink .8s infinite}
-.fkey.thresh-warn .kid{color:#fff3b0!important}
+.fkey.thresh-warn{outline:3px solid #ff2ec4;outline-offset:2px;animation:ringPulse 1.2s infinite}
+@keyframes ringPulse{0%,100%{outline-color:#ff2ec4;box-shadow:0 0 0 0 rgba(255,46,196,.0)}50%{outline-color:#ff8adf;box-shadow:0 0 14px 4px rgba(255,46,196,.85)}}
 .moverlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
 .moverlay.show{opacity:1;pointer-events:all}
 .modal{background:var(--card);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:460px;box-shadow:0 24px 80px rgba(0,0,0,.8);transform:translateY(20px);transition:transform .2s;overflow:hidden}
@@ -127,9 +130,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .leg-k{width:24px;height:16px;border-radius:3px;flex-shrink:0}
 .leg-k.ok{background:var(--ok-top);border:1px solid var(--ok-bdr);box-shadow:0 2px 0 var(--ok-shd),0 0 5px var(--ok-glow)}
 .leg-k.broken{background:var(--br-top);border:1px solid var(--br-bdr);box-shadow:0 2px 0 var(--br-shd),0 0 5px var(--br-glow)}
-.leg-k.pm{background:var(--pm-top);border:1px solid var(--pm-bdr);box-shadow:0 2px 0 var(--pm-shd),0 0 5px var(--pm-glow)}
+.leg-k.pm{background:#0a2a2e;border:1px solid #00e5ff;box-shadow:0 2px 0 #005f6e,0 0 5px rgba(0,229,255,.4)}
 .leg-k.unknown{background:var(--un-top);border:1px solid var(--un-bdr)}
-.leg-k.reschedule{background:#2a1f00;border:1px solid #b8860b;box-shadow:0 2px 0 #5a4000,0 0 5px rgba(255,200,0,.5)}
+.leg-k.reschedule{background:#0f1a3a;border:1px solid #3b82f6;box-shadow:0 2px 0 #1e3a8a,0 0 5px rgba(59,130,246,.5)}
+.leg-k.deface{background:#3a1f00;border:1px solid #ff8800;box-shadow:0 2px 0 #7a3d00,0 0 5px rgba(255,136,0,.5)}
+.leg-k.unavailable{background:#2a0f3a;border:1px solid #a855f7;box-shadow:0 2px 0 #5b21b6,0 0 5px rgba(168,85,247,.5)}
+.leg-k.threshwarn{background:var(--card);border:2px solid #ff2ec4;box-shadow:0 0 6px rgba(255,46,196,.6)}
 #toast{position:fixed;bottom:54px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--success);color:#000;padding:11px 22px;border-radius:100px;font-weight:700;font-size:13px;transition:transform .25s;z-index:300;white-space:nowrap}
 #toast.show{transform:translateX(-50%) translateY(0)}
 #toast.err{background:var(--danger);color:#fff}
@@ -159,7 +165,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .pm-st-btn .pm-si{font-size:20px}
 .pm-st-btn.ok.sel{border-color:#00ff50;background:rgba(0,255,80,.08);color:#00ff50}
 .pm-st-btn.br.sel{border-color:#ff4444;background:rgba(255,68,68,.08);color:#ff4444}
-.pm-st-btn.rs.sel{border-color:#ffcc00;background:rgba(255,200,0,.1);color:#ffcc00}
+.pm-st-btn.rs.sel{border-color:#3b82f6;background:rgba(59,130,246,.1);color:#3b82f6}
 .pm-st-btn.deface.sel{border-color:#ff8800;background:rgba(255,136,0,.1);color:#ff8800}
 .pm-st-btn.unavail.sel{border-color:#c58aff;background:rgba(197,138,255,.1);color:#c58aff}
 .pm-st-btn.rnd.sel{border-color:#00e5ff;background:rgba(0,229,255,.1);color:#00e5ff}
@@ -348,8 +354,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
   <div class="stat br"><div class="n" id="s-br">0</div><div class="l">🔴 ชำรุด</div></div>
   <div class="stat pm"><div class="n" id="s-pm">0</div><div class="l">🟡 PM แล้ว</div></div>
   <div class="stat un"><div class="n" id="s-un">0</div><div class="l">⬜ ไม่ทราบ</div></div>
-  <div class="stat"><div class="n" id="s-rs" style="color:#ffcc00">0</div><div class="l">📅 นัดใหม่</div></div>
+  <div class="stat"><div class="n" id="s-rs" style="color:#3b82f6">0</div><div class="l">📅 นัดใหม่</div></div>
   <div class="stat"><div class="n" id="s-deface" style="color:#ff8800">0</div><div class="l">🟠 Deface</div></div>
+  <div class="stat"><div class="n" id="s-unavail" style="color:#a855f7">0</div><div class="l">🚫 ไม่สะดวก</div></div>
 </div>
 <div style="display:flex;align-items:center;padding:6px 20px">
   <div class="sync-bar"><div class="sync-dot"></div><span>พร้อมใช้งาน</span></div>
@@ -378,9 +385,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 <div class="legend">
   <div class="leg-i"><div class="leg-k ok"></div>ปกติ</div>
   <div class="leg-i"><div class="leg-k broken"></div>ชำรุด</div>
+  <div class="leg-i"><div class="leg-k deface"></div>Deface</div>
+  <div class="leg-i"><div class="leg-k reschedule"></div>นัดใหม่</div>
+  <div class="leg-i"><div class="leg-k unavailable"></div>เจ้าหน้าที่ไม่สะดวก</div>
   <div class="leg-i"><div class="leg-k pm"></div>กำลัง PM</div>
   <div class="leg-i"><div class="leg-k unknown"></div>ไม่ทราบ</div>
-  <div class="leg-i"><div class="leg-k reschedule"></div>นัดใหม่</div>
+  <div class="leg-i"><div class="leg-k threshwarn"></div>ค่าไม่ผ่านเกณฑ์ (กรอบกระพริบชมพู)</div>
 </div>
 <div id="toast"></div>
 <div class="moverlay" id="modal">
@@ -682,10 +692,10 @@ function togFloor(fl){
 }
 
 function updateStats(){
-  let ok=0,br=0,pm=0,un=0,rs=0,ahu=0,fcu=0,df=0;
+  let ok=0,br=0,pm=0,un=0,rs=0,ahu=0,fcu=0,df=0,ua=0;
   RAW.forEach((r,i)=>{
     const st=getDisplayStatus(i);
-    if(st==='ok')ok++;else if(st==='broken')br++;else if(st==='pm')pm++;else if(st==='reschedule')rs++;else if(st!=='deface')un++;
+    if(st==='ok')ok++;else if(st==='broken')br++;else if(st==='pm')pm++;else if(st==='reschedule')rs++;else if(st==='unavailable')ua++;else if(st!=='deface')un++;
     if(r[3]==='AHU')ahu++;else fcu++;
     if(st==='deface'||threshWarn[i]||defaceFlag[i])df++;
   });
@@ -698,6 +708,7 @@ function updateStats(){
   document.getElementById('s-un').textContent=un;
   const rs_el=document.getElementById('s-rs');if(rs_el)rs_el.textContent=rs;
   const df_el=document.getElementById('s-deface');if(df_el)df_el.textContent=df;
+  const ua_el=document.getElementById('s-unavail');if(ua_el)ua_el.textContent=ua;
 }
 
 function openModal(i){
@@ -1001,7 +1012,7 @@ async function pmDoSubmit(){
     else if(pmStatus==='broken'){overrides[pmSelIdx]='broken';pmSet.delete(pmSelIdx);}
     else if(pmStatus==='deface'){overrides[pmSelIdx]='deface';pmSet.add(pmSelIdx);}
     else if(pmStatus==='reschedule'){overrides[pmSelIdx]='reschedule';pmSet.add(pmSelIdx);}
-    else if(pmStatus==='unavailable'){overrides[pmSelIdx]='reschedule';pmSet.add(pmSelIdx);}
+    else if(pmStatus==='unavailable'){overrides[pmSelIdx]='unavailable';pmSet.add(pmSelIdx);}
     else{pmSet.add(pmSelIdx);}
     const thWarnings=pmRound==='M'?[]:pmGetThresholdWarnings();
     if(thWarnings.length){threshWarn[pmSelIdx]=true;}else{delete threshWarn[pmSelIdx];}
