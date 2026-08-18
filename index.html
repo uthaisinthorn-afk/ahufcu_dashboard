@@ -272,7 +272,152 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .kpi-empty{padding:30px 18px;text-align:center;color:var(--muted);font-size:13px}
 .kpi-loading{padding:30px 18px;text-align:center;color:var(--muted);font-size:13px}
 #kpi-panel-daily.hidden,#kpi-panel-monthly.hidden{display:none}
+
+/* ── MAP BUTTON ── */
+.btn-map-view{background:rgba(0,255,80,.08);border:1px solid rgba(0,255,80,.25);color:#00ff50;
+  border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;
+  padding:9px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;width:100%;justify-content:center;margin-top:6px;}
+.btn-map-view:hover{background:rgba(0,255,80,.15);box-shadow:0 0 14px rgba(0,255,80,.25);}
+
+/* ── MAP FULLSCREEN MODAL ── */
+.map-modal-full{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;font-family:'Sarabun',sans-serif;}
+.map-modal-full.open{display:flex;}
+.map-topbar2{background:#060606;border-bottom:1px solid #1a2a1a;padding:10px 16px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.map-topbar2-info{flex:1;}
+.map-topbar2 h2{color:#00ff50;font-size:14px;font-weight:600;}
+.map-topbar2 .map-sub{color:#556;font-size:11px;margin-top:2px;}
+.machine-tag-map{display:inline-flex;align-items:center;gap:5px;
+  background:#0a1a0a;border:1px solid #00cc7a;color:#00ff50;
+  font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;font-family:'IBM Plex Mono',monospace;}
+.btn-close-mapfull{background:#111;border:1px solid #333;color:#aaa;
+  padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;}
+.btn-close-mapfull:hover{border-color:#555;color:#fff;}
+.map-viewport2{flex:1;position:relative;overflow:hidden;background:#000;cursor:grab;}
+.map-viewport2:active{cursor:grabbing;}
+.map-inner2{position:absolute;transform-origin:0 0;}
+.map-inner2 img{display:block;}
+.zoom-ctrls{position:absolute;bottom:60px;right:16px;display:flex;flex-direction:column;gap:4px;z-index:10;}
+.zbtn{width:34px;height:34px;background:rgba(10,10,10,.9);border:1px solid #2a2a2a;
+  color:#666;font-size:18px;border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.zbtn:hover{border-color:#00ff50;color:#00ff50;}
+.zlabel{background:rgba(10,10,10,.8);border:1px solid #222;color:#444;
+  font-size:10px;text-align:center;padding:3px 0;border-radius:4px;font-family:'IBM Plex Mono',monospace;}
+.map-marker2{position:absolute;transform:translate(-50%,-50%);pointer-events:none;z-index:20;}
+.marker-glow2{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:80px;height:38px;border-radius:5px;
+  background:rgba(255,238,68,0.18);
+  box-shadow:0 0 18px 8px rgba(255,220,0,0.4);
+  animation:mapBlink .85s steps(1) infinite;
+}
+.marker-glow2.red{
+  background:rgba(255,60,60,0.18);
+  box-shadow:0 0 18px 8px rgba(255,50,50,0.4);
+}
+.marker-box2{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  border:2px solid #ffee44;border-radius:3px;
+  padding:4px 9px;background:rgba(0,0,0,0.88);
+  white-space:nowrap;
+  animation:mapBlink .85s steps(1) infinite;
+  box-shadow:0 0 10px rgba(255,238,68,.5),inset 0 0 8px rgba(255,220,0,.08);
+}
+.marker-box2.red{border-color:#ff3333;box-shadow:0 0 10px rgba(255,50,50,.5);}
+.mb-id{color:#ffee44;font-size:12px;font-weight:700;letter-spacing:.5px;
+  text-shadow:0 0 8px #ffcc00;display:block;font-family:'IBM Plex Mono',monospace;}
+.marker-box2.red .mb-id{color:#ff4444;text-shadow:0 0 8px #cc0000;}
+.mb-sub{color:#ffcc88;font-size:9px;display:block;margin-top:1px;}
+.marker-box2.red .mb-sub{color:#ff9999;}
+@keyframes mapBlink{0%,49%{opacity:1;}50%,100%{opacity:.1;}}
+@keyframes markerPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.45;transform:scale(1.18);}}
+.map-legend2{background:#060606;border-top:1px solid #1a1a1a;padding:7px 16px;
+  display:flex;gap:20px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+.leg2{display:flex;align-items:center;gap:6px;font-size:10px;color:#556;}
+.leg2-dot{width:10px;height:10px;border-radius:50%;}
+.map-hint{margin-left:auto;font-size:10px;color:#333;}
+
+/* ── COORDINATE PICKER ─────────────────────────────── */
+.btn-pick-coord{
+  padding:6px 13px;border-radius:6px;
+  border:1px solid rgba(0,229,255,.35);
+  background:rgba(0,229,255,.08);
+  color:#00e5ff;font-family:'Sarabun',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.btn-pick-coord:hover{background:rgba(0,229,255,.18);border-color:#00e5ff;}
+.btn-pick-coord.active{
+  background:rgba(255,215,0,.15);border-color:#ffd700;
+  color:#ffd700;animation:pickPulse 1s infinite;
+}
+@keyframes pickPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.5);}50%{box-shadow:0 0 0 5px rgba(255,215,0,0);}}
+.map-viewport2.pick-mode{cursor:crosshair !important;}
+.map-viewport2.pick-mode *{cursor:crosshair !important;}
+.pick-crosshair{
+  position:absolute;pointer-events:none;z-index:30;
+  transform:translate(-50%,-50%);display:none;
+}
+.pick-crosshair::before,.pick-crosshair::after{
+  content:'';position:absolute;background:#ffd700;
+  box-shadow:0 0 6px rgba(255,215,0,.8);
+}
+.pick-crosshair::before{width:22px;height:2px;top:50%;left:50%;transform:translate(-50%,-50%);}
+.pick-crosshair::after {width:2px;height:22px;top:50%;left:50%;transform:translate(-50%,-50%);}
+.pick-circle{
+  position:absolute;pointer-events:none;z-index:31;
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid #ffd700;transform:translate(-50%,-50%);
+  display:none;box-shadow:0 0 8px rgba(255,215,0,.6);
+}
+.pick-toast{
+  position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.88);border:1px solid #ffd700;
+  color:#ffd700;font-size:12px;font-family:'IBM Plex Mono',monospace;
+  padding:7px 16px;border-radius:6px;z-index:50;
+  white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+.pick-toast.show{opacity:1;}
+.btn-export-coords{
+  padding:6px 13px;border-radius:6px;
+  border:1px solid rgba(0,255,80,.25);
+  background:rgba(0,255,80,.06);
+  color:#00cc55;font-family:'Sarabun',sans-serif;
+  font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-export-coords:hover{background:rgba(0,255,80,.14);border-color:#00cc55;}
+.export-popup{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.78);z-index:10000;
+  align-items:center;justify-content:center;
+}
+.export-popup.open{display:flex;}
+.export-box{
+  background:#0e1420;border:1px solid #243040;border-radius:10px;
+  padding:22px 24px;max-width:580px;width:92%;
+}
+.export-box h3{color:#00e5ff;margin-bottom:10px;font-size:14px;font-family:'IBM Plex Mono',monospace;}
+.export-box textarea{
+  width:100%;height:200px;background:#080c14;border:1px solid #2a3a50;
+  color:#7af;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  border-radius:6px;padding:8px;resize:vertical;outline:none;
+}
+.export-box-btns{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;}
+.btn-copy-coords{
+  padding:7px 16px;border-radius:6px;
+  background:linear-gradient(135deg,#004455,#00aacc);
+  border:none;color:#fff;font-family:'Sarabun',sans-serif;
+  font-size:13px;cursor:pointer;font-weight:700;
+}
+.btn-close-export{
+  padding:7px 14px;border-radius:6px;background:transparent;
+  border:1px solid #333;color:#888;font-family:'Sarabun',sans-serif;
+  font-size:13px;cursor:pointer;
+}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="login-overlay" id="loginOverlay">
@@ -328,6 +473,31 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 </div>
+<div class="admin-panel" id="planPanel">
+  <div class="admin-box" style="max-width:640px">
+    <div class="admin-head"><span>📅</span><span class="admin-title" style="color:#00e5ff">แผนการทำ PM</span><button class="admin-close" id="btnClosePlan">✕</button></div>
+    <div class="admin-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <label for="plan-upload-input" style="flex:1;padding:9px;border-radius:8px;border:1.5px dashed #00e5ff;background:rgba(0,229,255,.06);color:#00e5ff;font-weight:700;cursor:pointer;text-align:center;font-size:13px">📤 อัปโหลดแผนใหม่ (.xlsx)</label>
+        <input type="file" id="plan-upload-input" accept=".xlsx,.xls" style="display:none">
+        <button id="btnPlanReset" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#8a93b8;font-weight:700;cursor:pointer;font-size:12px">↺ ค่าเริ่มต้น</button>
+      </div>
+      <div id="plan-upload-msg" style="font-size:12px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="plan-tab-btn act" id="plan-tab-M" style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(0,229,255,.1);color:#00e5ff;font-weight:700;cursor:pointer">รอบ M</button>
+        <button class="plan-tab-btn" id="plan-tab-Q" style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#8a93b8;font-weight:700;cursor:pointer">รอบ Q</button>
+        <button class="plan-tab-btn" id="plan-tab-S" style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#8a93b8;font-weight:700;cursor:pointer">รอบ S</button>
+      </div>
+      <div style="font-size:12px;color:#8a93b8;margin-bottom:10px">เลือกวันที่เพื่อเปลี่ยนสถานะเครื่องทั้งหมดในชั้นนั้นเป็น 🟡 PM ทันที (ไม่รวมเครื่องที่ชำรุด) — ไม่กระทบข้อมูล "รอบ PM" ที่กรอกในฟอร์มแต่ละเครื่อง</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:end">
+        <div style="flex:1"><label style="display:block;font-size:11px;color:#8a7ab0;margin-bottom:4px">วันที่</label><input type="date" id="plan-add-date" style="width:100%;padding:8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#e8ecf7;font-family:'Sarabun',sans-serif"></div>
+        <div style="flex:1"><label style="display:block;font-size:11px;color:#8a7ab0;margin-bottom:4px">ชั้น</label><input type="text" id="plan-add-floor" placeholder="เช่น 3 หรือ B1" style="width:100%;padding:8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#e8ecf7;font-family:'Sarabun',sans-serif"></div>
+        <button id="btnPlanAdd" style="padding:8px 14px;border-radius:7px;border:none;background:#00e5ff;color:#001a1f;font-weight:700;cursor:pointer;white-space:nowrap">+ เพิ่ม</button>
+      </div>
+      <div id="plan-list" style="max-height:50vh;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
 <div class="hdr">
   <div class="hdr-l">
     <div class="logo">AC MONITOR</div>
@@ -374,6 +544,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
   <button class="btn-toggle-pm" id="btnTogglePM">🔧 โหมด PM</button>
   <button class="btn-toggle-pm" id="btnSaveFile" style="border-color:rgba(99,179,237,.4);color:rgba(99,179,237,.9)">💾 บันทึกไฟล์</button>
   <button class="btn-toggle-pm" id="btnOpenKPI" style="border-color:rgba(255,215,0,.4);color:#ffd700;margin-left:6px">📊 KPI</button>
+  <button class="btn-toggle-pm" id="btnOpenPlan" style="border-color:rgba(0,229,255,.4);color:#00e5ff;margin-left:6px">📅 แผนการทำ PM</button>
 </div>
 <div class="pm-select-bar hidden" id="pmSelectBar">
   <span class="pm-select-label">🟡 เลือกชั้น-โซนที่จะทำ PM:</span>
@@ -421,6 +592,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       <button class="btn-open-pm" id="btnOpenPM">📋 กรอก PM</button>
       <button class="btn-mclose" id="btnModalClose2">ปิด</button>
     </div>
+    <div style="padding:0 20px 16px"><button class="btn-map-view" onclick="openMapFull()">🗺 ดูตำแหน่งบนแผนที่</button></div>
   </div>
 </div>
 <div id="pm-overlay"></div>
@@ -444,6 +616,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       <div><label>ขนาด (BTU/hr)</label><input class="pm-input" id="pm-size-val" type="text" readonly style="opacity:.6"></div>
     </div></div>
     <div class="pm-section"><label>สถานที่ติดตั้ง</label><input class="pm-input" id="pm-location" type="text" placeholder="ห้อง / บริเวณ"></div>
+    <div class="pm-section"><label>📐 ขนาด Filter</label><input class="pm-input" id="pm-filter-size" type="text" placeholder="เช่น 20x20x2 นิ้ว"></div>
     <div class="pm-section"><label>รุ่นเครื่อง (ดึงขนาด/กำลัง BTU/hr จากไฟล์อัตโนมัติ)</label>
       <input class="pm-input" id="pm-model" type="text" readonly style="opacity:.6">
     </div>
@@ -564,8 +737,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
   <div class="pm-submit-wrap">
     <button class="pm-print-btn" id="pm-print-btn" type="button" onclick="pmPrintCheckSheet()">🖨️ พิมพ์ Check Sheet</button>
     <button class="pm-breakdown-btn" id="pm-breakdown-btn" type="button" onclick="showBreakdownPreview()">🖨️ พิมพ์ใบแจ้งชำรุด</button>
+    <button class="pm-breakdown-btn" id="pm-locsheet-btn" type="button" onclick="showLocationSheetPreview()" style="background:linear-gradient(135deg,#1a5c3a,#2ea45a);">🖨️ พิมพ์ใบตำแหน่งติดตั้ง</button>
     <button class="pm-submit-btn" id="pm-submit-btn">📤 ส่งแบบฟอร์ม PM</button>
   </div>
+</div>
+<div id="loc-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9998;overflow-y:auto;">
+  <div class="bd-toolbar" style="position:sticky;top:0;z-index:2;background:#111;padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;">
+    <button type="button" class="bd-btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+    <button type="button" class="bd-btn-close" onclick="closeLocationPreview()">✕ ปิด</button>
+  </div>
+  <div id="loc-page" style="background:#fff;max-width:210mm;margin:16px auto;padding:14mm 16mm;color:#000;"></div>
 </div>
 <div id="bd-overlay">
   <div class="bd-toolbar">
@@ -584,6 +765,70 @@ const threshWarn = (()=>{try{return JSON.parse(localStorage.getItem('ac_thwarn')
 function saveThreshWarn(){try{localStorage.setItem('ac_thwarn',JSON.stringify(threshWarn));}catch(e){}}
 const defaceFlag = (()=>{try{return JSON.parse(localStorage.getItem('ac_dfflag')||'{}');}catch(e){return {};}})();
 function saveDefaceFlag(){try{localStorage.setItem('ac_dfflag',JSON.stringify(defaceFlag));}catch(e){}}
+const filterSizeMap = (()=>{try{return JSON.parse(localStorage.getItem('ac_filtersize')||'{}');}catch(e){return {};}})();
+function saveFilterSizeMap(){try{localStorage.setItem('ac_filtersize',JSON.stringify(filterSizeMap));}catch(e){}}
+// ── PM DRAFT PERSISTENCE — เก็บข้อมูลที่กรอกค้างไว้ต่อเครื่อง (สำหรับกรณีรอผู้รับเหมาล้างเครื่องแล้วต้องออกไปทำเครื่องอื่นก่อน) ──
+const pmDraftMap = (()=>{try{return JSON.parse(localStorage.getItem('ac_pmdraft')||'{}');}catch(e){return {};}})();
+function savePmDraftMap(){try{localStorage.setItem('ac_pmdraft',JSON.stringify(pmDraftMap));}catch(e){}}
+function pmSaveDraft(){
+  if(pmSelIdx===null||pmSelIdx===undefined)return;
+  const r=RAW[pmSelIdx];if(!r)return;
+  const mid=r[0];if(!mid)return;
+  const checklist=pmRound?PM_ROUND_ITEMS[pmRound].map((_,idx)=>{const el=document.getElementById('pm-rc'+idx);return !!(el&&el.checked);}):[];
+  const deface=[1,2,3,4,5].map(n=>{const el=document.getElementById('pm-df'+n);return !!(el&&el.checked);});
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  const draft={
+    round:pmRound,status:pmStatus,checklist:checklist,deface:deface,
+    unavailReason:g('pm-unavail-reason'),note:g('pm-note'),
+    air_before:g('pm-air-before'),air_after:g('pm-air-after'),
+    amp_before:g('pm-amp-before'),amp_after:g('pm-amp-after'),
+    temp_before:g('pm-temp-before'),temp_after:g('pm-temp-after'),
+    operator:g('pm-operator'),date:g('pm-date'),asset:g('pm-asset'),location:g('pm-location'),
+    ts:Date.now()
+  };
+  const isEmpty=!draft.round&&!draft.status&&!draft.note&&!draft.unavailReason&&
+    !draft.air_before&&!draft.air_after&&!draft.amp_before&&!draft.amp_after&&
+    !draft.temp_before&&!draft.temp_after&&
+    !draft.checklist.some(Boolean)&&!draft.deface.some(Boolean);
+  if(isEmpty){delete pmDraftMap[mid];}else{pmDraftMap[mid]=draft;}
+  savePmDraftMap();
+}
+function pmApplyDraft(draft){
+  if(draft.round){
+    pmRound=draft.round;
+    document.querySelectorAll('.pm-st-btn.rnd').forEach(b=>b.classList.toggle('sel',b.dataset.pmround===draft.round));
+    document.getElementById('pm-round-hint').textContent=PM_ROUND_LABELS[draft.round]+(draft.round==='M'?' — ไม่ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิ เพื่อความรวดเร็ว':' — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย');
+    pmRenderChecklist();
+    (draft.checklist||[]).forEach((checked,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
+  }
+  if(draft.status){
+    pmStatus=draft.status;
+    document.querySelectorAll('.pm-st-btn').forEach(b=>{if(!b.classList.contains('rnd'))b.classList.toggle('sel',b.dataset.pmst===draft.status);});
+    document.getElementById('pm-chk-section').style.display=pmStatus==='ok'?'block':'none';
+    const dfSec=document.getElementById('pm-deface-section');if(dfSec)dfSec.style.display=pmStatus==='deface'?'block':'none';
+    const unavailSec=document.getElementById('pm-unavail-section');if(unavailSec)unavailSec.style.display=pmStatus==='unavailable'?'block':'none';
+    const printBtn=document.getElementById('pm-print-btn');if(printBtn)printBtn.style.display=(pmStatus==='ok'||pmStatus==='broken')?'block':'none';
+    const bdBtn=document.getElementById('pm-breakdown-btn');if(bdBtn)bdBtn.style.display=pmStatus==='broken'?'block':'none';
+  }
+  const measureSec=document.getElementById('pm-measure-section');
+  if(measureSec)measureSec.style.display=(pmStatus==='unavailable'||pmRound==='M')?'none':'block';
+  (draft.deface||[]).forEach((checked,i0)=>{const el=document.getElementById('pm-df'+(i0+1));if(el)el.checked=checked;});
+  const unavailEl=document.getElementById('pm-unavail-reason');if(unavailEl)unavailEl.value=draft.unavailReason||'';
+  const noteEl=document.getElementById('pm-note');if(noteEl)noteEl.value=draft.note||'';
+  ['air_before','air_after','amp_before','amp_after','temp_before','temp_after'].forEach(k=>{
+    const id='pm-'+k.replace('_','-');const el=document.getElementById(id);if(el)el.value=draft[k]||'';
+  });
+  if(draft.operator){const el=document.getElementById('pm-operator');if(el)el.value=draft.operator;}
+  if(draft.date){const el=document.getElementById('pm-date');if(el)el.value=draft.date;}
+  if(draft.asset){const el=document.getElementById('pm-asset');if(el)el.value=draft.asset;}
+  if(draft.location){const el=document.getElementById('pm-location');if(el)el.value=draft.location;}
+  pmCheckThresholds();
+}
+function pmClearDraft(machineId){
+  if(!machineId)return;
+  delete pmDraftMap[machineId];
+  savePmDraftMap();
+}
 let filter={floor:'',zone:'',type:'',status:'all',search:''};
 let selIdx=null,selModalStatus=null,pmMode=false,pmActive=false,pmFloor='',pmZone='';
 let pmStatus=null,pmSelIdx=null;
@@ -774,6 +1019,186 @@ function cancelPM(){
   render();showToast('ยกเลิก PM Mode แล้ว');
 }
 
+// ─── แผนการทำ PM (PM Plan) — ไม่แตะ/ไม่กระทบระบบรอบ PM (M/Q/S) ที่มีอยู่แล้ว ───
+const PM_PLAN_DEFAULT = {
+  M: [
+    {date:'2026-08-02',floor:'B1'},{date:'2026-08-03',floor:'1'},{date:'2026-08-04',floor:'2'},
+    {date:'2026-08-05',floor:'3'},{date:'2026-08-06',floor:'4'},{date:'2026-08-07',floor:'5'},
+    {date:'2026-08-10',floor:'8'},{date:'2026-08-11',floor:'9'},{date:'2026-08-12',floor:'10'},
+    {date:'2026-08-13',floor:'11'},{date:'2026-08-14',floor:'12'},{date:'2026-08-17',floor:'15'},
+    {date:'2026-08-18',floor:'16'},{date:'2026-08-19',floor:'17'},{date:'2026-08-20',floor:'18'},
+    {date:'2026-08-21',floor:'19'},{date:'2026-08-24',floor:'22'},{date:'2026-08-25',floor:'23'},
+    {date:'2026-08-26',floor:'24'},{date:'2026-08-27',floor:'25'},{date:'2026-08-28',floor:'26'},
+    {date:'2026-08-29',floor:'26'}
+  ],
+  Q: [
+    {date:'2026-08-02',floor:'B1'},{date:'2026-08-03',floor:'1'},{date:'2026-08-04',floor:'2'},
+    {date:'2026-08-05',floor:'3'},{date:'2026-08-06',floor:'4'},{date:'2026-08-07',floor:'5'},
+    {date:'2026-08-10',floor:'8'},{date:'2026-08-11',floor:'9'},{date:'2026-08-12',floor:'10'},
+    {date:'2026-08-13',floor:'11'},{date:'2026-08-14',floor:'12'},{date:'2026-08-17',floor:'15'},
+    {date:'2026-08-18',floor:'16'},{date:'2026-08-19',floor:'17'},{date:'2026-08-20',floor:'18'},
+    {date:'2026-08-21',floor:'19'},{date:'2026-08-24',floor:'22'},{date:'2026-08-25',floor:'23'},
+    {date:'2026-08-26',floor:'24'},{date:'2026-08-27',floor:'25'},{date:'2026-08-28',floor:'26'},
+    {date:'2026-08-29',floor:'26'}
+  ],
+  S: []
+};
+let PM_PLAN = (()=>{try{const s=localStorage.getItem('ac_pmplan');return s?JSON.parse(s):JSON.parse(JSON.stringify(PM_PLAN_DEFAULT));}catch(e){return JSON.parse(JSON.stringify(PM_PLAN_DEFAULT));}})();
+function planSave(){try{localStorage.setItem('ac_pmplan',JSON.stringify(PM_PLAN));}catch(e){}}
+let planRound='M';
+
+function planFmtDate(iso){
+  const d=new Date(iso+'T00:00:00');
+  const days=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return d.getDate()+' '+months[d.getMonth()]+' '+(d.getFullYear()+543)+' ('+days[d.getDay()]+')';
+}
+function openPlanModal(){
+  document.getElementById('planPanel').classList.add('show');
+  planRenderList();
+}
+function closePlanModal(){
+  document.getElementById('planPanel').classList.remove('show');
+}
+function planSwitchRound(r){
+  planRound=r;
+  ['M','Q','S'].forEach(k=>{
+    const btn=document.getElementById('plan-tab-'+k);
+    if(!btn)return;
+    btn.style.background=r===k?'rgba(0,229,255,.1)':'transparent';
+    btn.style.color=r===k?'#00e5ff':'#8a93b8';
+  });
+  planRenderList();
+}
+function planRenderList(){
+  const list=PM_PLAN[planRound]||[];
+  const todayStr=new Date().toISOString().slice(0,10);
+  const html=list.map((item,idx)=>{
+    const count=(byFloorZone[item.floor]?Object.values(byFloorZone[item.floor]).reduce((s,arr)=>s+arr.length,0):0);
+    const isToday=item.date===todayStr;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid '+(isToday?'#00e5ff':'rgba(255,255,255,.12)')+';border-radius:9px;margin-bottom:8px;background:'+(isToday?'rgba(0,229,255,.08)':'rgba(255,255,255,.02)')+'">'
+      +'<div><div style="font-weight:700;color:#e8ecf7">'+planFmtDate(item.date)+(isToday?' <span style="color:#00e5ff;font-size:11px">← วันนี้</span>':'')+'</div>'
+      +'<div style="font-size:12px;color:#8a93b8">ชั้น '+item.floor+' · '+count+' เครื่อง</div></div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="plan-activate-btn" data-floor="'+item.floor+'" style="padding:8px 14px;border-radius:8px;border:none;background:#ffd700;color:#1a1200;font-weight:700;cursor:pointer;font-family:\'Sarabun\',sans-serif">🟡 เข้าโหมด PM</button>'
+      +'<button class="plan-delete-btn" data-idx="'+idx+'" title="ลบ" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(255,68,68,.3);background:rgba(255,68,68,.08);color:#ff5555;font-weight:700;cursor:pointer">🗑</button>'
+      +'</div></div>';
+  }).join('');
+  document.getElementById('plan-list').innerHTML=html||'<div style="color:#8a93b8;text-align:center;padding:20px">ไม่มีข้อมูลแผน</div>';
+}
+function planActivateFloor(floor){
+  const zones=byFloorZone[floor]||{};
+  let targets=[];
+  Object.keys(zones).forEach(zn=>{ targets=targets.concat(zones[zn].filter(i=>getStatus(i)!=='broken')); });
+  targets.forEach(i=>pmSet.add(i));
+  savePMSet();
+  pmActive=true;pmFloor=floor;pmZone='ทั้งหมด';
+  const lbl=document.getElementById('pmBannerLabel');if(lbl)lbl.textContent='ชั้น '+floor+' (จากแผน PM)';
+  const banner=document.getElementById('pmBanner');if(banner)banner.classList.remove('hidden');
+  render();
+  showToast('🟡 เข้าโหมด PM ชั้น '+floor+' · '+targets.length+' เครื่อง (จากแผน)');
+  closePlanModal();
+}
+function planAddEntry(){
+  const dateEl=document.getElementById('plan-add-date'),floorEl=document.getElementById('plan-add-floor');
+  const d=dateEl.value,fl=floorEl.value.trim();
+  if(!d||!fl){showToast('กรุณากรอกวันที่และชั้น','warn');return;}
+  if(!PM_PLAN[planRound])PM_PLAN[planRound]=[];
+  PM_PLAN[planRound].push({date:d,floor:fl});
+  PM_PLAN[planRound].sort((a,b)=>a.date.localeCompare(b.date));
+  planSave();
+  dateEl.value='';floorEl.value='';
+  planRenderList();
+}
+function planDeleteEntry(idx){
+  if(!PM_PLAN[planRound])return;
+  PM_PLAN[planRound].splice(idx,1);
+  planSave();
+  planRenderList();
+}
+function planResetDefault(){
+  if(!confirm('รีเซ็ตแผน PM กลับเป็นค่าเริ่มต้นทั้งหมด? การแก้ไข/อัปโหลดที่ทำไว้จะหายไป'))return;
+  PM_PLAN=JSON.parse(JSON.stringify(PM_PLAN_DEFAULT));
+  planSave();
+  document.getElementById('plan-upload-msg').textContent='';
+  planRenderList();
+}
+function planParseWorkbook(wb){
+  const RED_LIKE=(rgb)=>{
+    if(!rgb)return false;
+    const r=parseInt(rgb.slice(-6,-4),16),g=parseInt(rgb.slice(-4,-2),16),b=parseInt(rgb.slice(-2),16);
+    return r>150 && r-g>60 && r-b>60;
+  };
+  const newPlan={};
+  wb.SheetNames.forEach(sheetName=>{
+    const ws=wb.Sheets[sheetName];
+    const ref=ws['!ref'];if(!ref)return;
+    const range=XLSX.utils.decode_range(ref);
+    const headerRow=range.s.r;
+    const floorCols={};
+    for(let c=range.s.c+1;c<=range.e.c;c++){
+      const cell=ws[XLSX.utils.encode_cell({r:headerRow,c:c})];
+      if(cell&&cell.v!==undefined&&cell.v!==null&&String(cell.v).trim()!=='')floorCols[c]=String(cell.v).trim();
+    }
+    if(Object.keys(floorCols).length===0)return;
+    const entries=[];
+    for(let r=headerRow+1;r<=range.e.r;r++){
+      const dateCell=ws[XLSX.utils.encode_cell({r:r,c:range.s.c})];
+      if(!dateCell||dateCell.v===undefined||dateCell.v===null)continue;
+      let dateStr=null;
+      if(dateCell.t==='n'){
+        const d=XLSX.SSF.parse_date_code(dateCell.v);
+        if(d)dateStr=d.y+'-'+String(d.m).padStart(2,'0')+'-'+String(d.d).padStart(2,'0');
+      }else if(dateCell.t==='d'){
+        const d=dateCell.v;dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+      if(!dateStr)continue;
+      Object.keys(floorCols).forEach(c=>{
+        const cell=ws[XLSX.utils.encode_cell({r:r,c:Number(c)})];
+        const fg=cell&&cell.s&&cell.s.fgColor&&cell.s.fgColor.rgb;
+        if(fg&&!RED_LIKE(fg)){
+          entries.push({date:dateStr,floor:floorCols[c]});
+        }
+      });
+    }
+    if(entries.length)newPlan[sheetName.replace(/^รอบ\s*/,'').trim()||sheetName]=entries;
+  });
+  return newPlan;
+}
+function planHandleUpload(file){
+  if(!file)return;
+  const msgEl=document.getElementById('plan-upload-msg');
+  msgEl.style.color='#8a93b8';msgEl.textContent='⏳ กำลังอ่านไฟล์...';
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array',cellStyles:true});
+      const parsed=planParseWorkbook(wb);
+      const rounds=Object.keys(parsed);
+      if(!rounds.length||rounds.every(r=>parsed[r].length===0)){
+        msgEl.style.color='#ff5555';
+        msgEl.textContent='❌ ไม่พบข้อมูลตารางที่อ่านได้ (ตรวจสอบว่าไฟล์มีสีเซลล์ระบุวัน/ชั้น)';
+        return;
+      }
+      PM_PLAN=parsed;
+      planSave();
+      const firstRound=rounds[0];
+      if(document.getElementById('plan-tab-M'))document.getElementById('plan-tab-M').textContent='รอบ '+(rounds[0]||'M');
+      if(document.getElementById('plan-tab-Q')&&rounds[1])document.getElementById('plan-tab-Q').textContent='รอบ '+rounds[1];
+      if(document.getElementById('plan-tab-S')&&rounds[2])document.getElementById('plan-tab-S').textContent='รอบ '+rounds[2];
+      msgEl.style.color='#00cc7a';
+      msgEl.textContent='✅ อัปโหลดสำเร็จ — พบ '+rounds.length+' รอบ ('+rounds.map(r=>r+':'+parsed[r].length+' วัน').join(', ')+')';
+      planSwitchRound(firstRound);
+    }catch(err){
+      msgEl.style.color='#ff5555';
+      msgEl.textContent='❌ อ่านไฟล์ไม่สำเร็จ: '+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+// ─── END แผนการทำ PM ─────────────────────────────────────────────────────
+
 function saveToFile(){
   const snap=RAW.map((row,i)=>{const nr=[...row];const s=getStatus(i);nr[2]=s==='ok'?1:s==='broken'?2:s==='pm'?3:0;return nr;});
   const blob=new Blob(['const RAW = '+JSON.stringify(snap)+';\n'],{type:'text/javascript'});
@@ -791,6 +1216,7 @@ function openPMPanel(i){
   document.getElementById('pm-asset').value=r[1]||'';
   document.getElementById('pm-size-val').value=r[8]?Number(r[8]).toLocaleString()+' BTU/hr':'-';
   document.getElementById('pm-location').value=r[4]||'';
+  document.getElementById('pm-filter-size').value=filterSizeMap[r[0]]||'';
   document.getElementById('pm-date').value=new Date().toISOString().slice(0,10);
   const sizeNum=r[8]?parseFloat(String(r[8]).replace(/,/g,'')):0;
   const sizeLabel=(sizeNum>=1000)?Number(sizeNum).toLocaleString()+' BTU/hr':'-';
@@ -825,6 +1251,11 @@ function openPMPanel(i){
   document.getElementById('pm-submit-btn').disabled=false;
   document.getElementById('pm-overlay').classList.add('show');
   document.getElementById('pm-panel').classList.add('show');
+  const draft=pmDraftMap[r[0]];
+  if(draft){
+    pmApplyDraft(draft);
+    showToast('🔄 กู้คืนข้อมูลที่กรอกค้างไว้ของเครื่องนี้');
+  }
 }
 function closePMPanel(){
   document.getElementById('pm-overlay').classList.remove('show');
@@ -869,6 +1300,7 @@ function pmSelectRound(round){
     const brBtn=document.querySelector('.pm-st-btn.br');if(brBtn)brBtn.classList.remove('warn');
   }
   pmRenderChecklist();
+  pmSaveDraft();
 }
 
 // ── เกณฑ์ปกติของค่าที่วัดได้ แยกตามประเภทเครื่อง AHU/FCU ──
@@ -1008,6 +1440,9 @@ async function pmDoSubmit(){
   btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;
   if(pmSelIdx!==null){
     const na=document.getElementById('pm-asset').value.trim();if(na)RAW[pmSelIdx][1]=na;
+    const fsz=document.getElementById('pm-filter-size').value.trim();
+    if(fsz){filterSizeMap[RAW[pmSelIdx][0]]=fsz;}else{delete filterSizeMap[RAW[pmSelIdx][0]];}
+    saveFilterSizeMap();
     if(pmStatus==='ok'){overrides[pmSelIdx]='ok';pmSet.add(pmSelIdx);}
     else if(pmStatus==='broken'){overrides[pmSelIdx]='broken';pmSet.delete(pmSelIdx);}
     else if(pmStatus==='deface'){overrides[pmSelIdx]='deface';pmSet.add(pmSelIdx);}
@@ -1021,6 +1456,7 @@ async function pmDoSubmit(){
     if(hasDefaceTicks){defaceFlag[pmSelIdx]=true;}else{delete defaceFlag[pmSelIdx];}
     saveDefaceFlag();
     saveOverrides();savePMSet();render();
+    pmClearDraft(RAW[pmSelIdx][0]);
     const sm={ok:'✅ ดำเนินการได้',broken:'🔴 ชำรุด',deface:'🟠 Deface',reschedule:'📅 นัดใหม่',unavailable:'🚫 เจ้าหน้าที่ไม่สะดวก'};
     showToast('📋 PM บันทึกแล้ว — '+(sm[pmStatus]||pmStatus));
   }
@@ -1032,6 +1468,7 @@ async function pmDoSubmit(){
     location:document.getElementById('pm-location').value,operator:op,
     machine_type:r[3]||'',machine_no:pmGetModel(),machine_id:r[0]||'',
     asset_no:document.getElementById('pm-asset').value,size_btu:r[8]||'',
+    filter_size:document.getElementById('pm-filter-size').value,
     pm_round:pmRound||'-',
     checklist:pmStatus==='unavailable'?'-':pmGetChecklist(),work_status:pmStatus,status_label:sm2[pmStatus]||pmStatus,
     deface_reasons:pmStatus==='deface'?pmGetDefaceReasons():'-',
@@ -1142,6 +1579,20 @@ function initApp(){
   document.getElementById('btnAddUser').addEventListener('click',addUser);
   document.getElementById('btnOpenKPI').addEventListener('click',openKPIPanel);
   document.getElementById('btnCloseKPI').addEventListener('click',closeKPIPanel);
+  document.getElementById('btnOpenPlan').addEventListener('click',openPlanModal);
+  document.getElementById('btnClosePlan').addEventListener('click',closePlanModal);
+  document.getElementById('plan-tab-M').addEventListener('click',()=>planSwitchRound('M'));
+  document.getElementById('plan-tab-Q').addEventListener('click',()=>planSwitchRound('Q'));
+  document.getElementById('plan-tab-S').addEventListener('click',()=>planSwitchRound('S'));
+  document.getElementById('btnPlanAdd').addEventListener('click',planAddEntry);
+  document.getElementById('btnPlanReset').addEventListener('click',planResetDefault);
+  document.getElementById('plan-upload-input').addEventListener('change',function(e){planHandleUpload(e.target.files[0]);});
+  document.getElementById('plan-list').addEventListener('click',function(e){
+    const actBtn=e.target.closest('.plan-activate-btn');
+    if(actBtn){planActivateFloor(actBtn.dataset.floor);return;}
+    const delBtn=e.target.closest('.plan-delete-btn');
+    if(delBtn){planDeleteEntry(parseInt(delBtn.dataset.idx));return;}
+  });
   document.getElementById('kpi-tab-daily').addEventListener('click',()=>kpiSwitchTab('daily'));
   document.getElementById('kpi-tab-monthly').addEventListener('click',()=>kpiSwitchTab('monthly'));
   document.getElementById('kpi-daily-date').addEventListener('change',kpiRenderDaily);
@@ -1203,6 +1654,7 @@ function initApp(){
       const bdBtn=document.getElementById('pm-breakdown-btn');
       if(printBtn)printBtn.style.display=(pmStatus==='ok'||pmStatus==='broken')?'block':'none';
       if(bdBtn)bdBtn.style.display=pmStatus==='broken'?'block':'none';
+      pmSaveDraft();
     });
   });
 
@@ -1223,6 +1675,17 @@ function initApp(){
   });
   const pmCAll=document.getElementById('pm-c-all');
   if(pmCAll)pmCAll.addEventListener('change',function(){pmToggleAllChecklist(this.checked);});
+  // ── Draft persistence: จับทุกการเปลี่ยนแปลงค่าในฟอร์ม PM แล้วบันทึกอัตโนมัติ ──
+  const pmPanelEl=document.getElementById('pm-panel');
+  if(pmPanelEl){
+    pmPanelEl.addEventListener('change',function(e){
+      if(e.target.closest('.pm-photo-btns')||e.target.type==='file')return;
+      pmSaveDraft();
+    });
+    pmPanelEl.addEventListener('input',function(e){
+      if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')pmSaveDraft();
+    });
+  }
 
   // event delegation สำหรับ mainContent (keycap click, floor header click)
   document.getElementById('mainContent').addEventListener('click',function(e){
@@ -1666,6 +2129,412 @@ function showBreakdownPreview(){
 }
 // ─── END PRINT ────────────────────────────────────────────────────────────────
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MAP MODULE — โหมดแผนที่ตำแหน่งเครื่อง AHU/FCU (ตามแพทเทิร์นระบบ EAF)
+// ═══════════════════════════════════════════════════════════════════════════
+var _mScale=1,_mPanX=0,_mPanY=0,_mDrag=false,_mSX,_mSY,_mSPX,_mSPY;
+
+function _mApply(){
+  document.getElementById('mapInner2').style.transform=
+    'translate('+_mPanX+'px,'+_mPanY+'px) scale('+_mScale+')';
+  document.getElementById('zoomLbl').textContent=Math.round(_mScale*100)+'%';
+}
+function mapZoom(f){
+  var vp=document.getElementById('mapVP');
+  var cx=vp.clientWidth/2,cy=vp.clientHeight/2;
+  _mPanX=cx+(_mPanX-cx)*f; _mPanY=cy+(_mPanY-cy)*f;
+  _mScale=Math.min(Math.max(_mScale*f,0.3),5); _mApply();
+}
+function mapReset(){
+  var vp=document.getElementById('mapVP');
+  var img=document.getElementById('mapFloorImg');
+  if(!img.naturalWidth){return;}
+  var sx=vp.clientWidth/img.naturalWidth, sy=vp.clientHeight/img.naturalHeight;
+  _mScale=Math.min(sx,sy);
+  _mPanX=(vp.clientWidth-img.naturalWidth*_mScale)/2;
+  _mPanY=(vp.clientHeight-img.naturalHeight*_mScale)/2;
+  _mApply();
+}
+(function(){
+  var vp=document.getElementById('mapVP');
+  if(!vp) return;
+  vp.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    var f=e.deltaY<0?1.1:0.9;
+    _mPanX=mx+(_mPanX-mx)*f; _mPanY=my+(_mPanY-my)*f;
+    _mScale=Math.min(Math.max(_mScale*f,0.3),5); _mApply();
+  },{passive:false});
+  vp.addEventListener('mousedown',function(e){_mDrag=true;_mSX=e.clientX;_mSY=e.clientY;_mSPX=_mPanX;_mSPY=_mPanY;});
+  window.addEventListener('mousemove',function(e){if(!_mDrag)return;_mPanX=_mSPX+(e.clientX-_mSX);_mPanY=_mSPY+(e.clientY-_mSY);_mApply();});
+  window.addEventListener('mouseup',function(){_mDrag=false;_mSX=undefined;_mSY=undefined;});
+  vp.addEventListener('touchstart',function(e){if(e.touches.length===1){_mDrag=true;_mSX=e.touches[0].clientX;_mSY=e.touches[0].clientY;_mSPX=_mPanX;_mSPY=_mPanY;}},{passive:true});
+  vp.addEventListener('touchmove',function(e){if(!_mDrag||e.touches.length!==1)return;_mPanX=_mSPX+(e.touches[0].clientX-_mSX);_mPanY=_mSPY+(e.touches[0].clientY-_mSY);_mApply();},{passive:true});
+  vp.addEventListener('touchend',function(){_mDrag=false;});
+})();
+
+// ── FLOOR_IMAGE_FILES: ชื่อไฟล์ภาพแผนผังต่อชั้น (โหลดจากโฟลเดอร์ floors/ บน repo) ──
+// ยังไม่มีรูปแผนผัง — ใส่ชื่อไฟล์จริงทีหลัง (เช่น "floor1.png") หรือถ้าชั้นนั้นแยกเป็นหลาย part
+// ให้เปลี่ยนเป็น object เหมือนระบบ EAF เช่น {"1":"floor1_partA.png","2":"floor1_partB.png"}
+var FLOOR_IMAGE_FILES = {
+  "1": "floor1.png", "2": "floor2.png", "3": "floor3.png", "4": "floor4.png",
+  "5": "floor5.png", "6": "floor6.png", "7": "floor7.png", "8": "floor8.png",
+  "9": "floor9.png", "10": "floor10.png", "11": "floor11.png", "12": "floor12.png",
+  "13": "floor13.png", "14": "floor14.png", "15": "floor15.png", "16": "floor16.png",
+  "17": "floor17.png", "18": "floor18.png", "19": "floor19.png", "20": "floor20.png",
+  "21": "floor21.png", "22": "floor22.png", "23": "floor23.png", "24": "floor24.png",
+  "25": "floor25.png", "26": "floor26.png", "27": "floor27.png", "28": "floor28.png",
+  "B1": "floorB1.png", "B2": "floorB2.png", "B3": "floorB3.png", "B4": "floorB4.png",
+  "M": "floorM.png", "30 31 32 ": "floorRoof.png"
+};
+
+// ── FLOOR_COORDS: พิกัด % ของแต่ละเครื่อง ต่อชั้น (key = รหัสเครื่อง ตรงตาม RAW[i][0]) ──
+// ยังว่างเปล่า — ใช้โหมด "📍 เลือกพิกัด" ในหน้าแผนที่เพื่อปักหมุดแล้ว Export มาแปะแทนตรงนี้
+var FLOOR_COORDS = {};
+
+// ── getFloorImageSrc: หาไฟล์ภาพแผนผังที่ถูกต้อง (รองรับทั้งชั้นภาพเดียว และชั้นแยกเป็น part) ──
+function getFloorImageSrc(floor, coordsPct) {
+  var entry = FLOOR_IMAGE_FILES[floor];
+  if (!entry) return null;
+  if (typeof entry === 'string') return 'floors/' + entry;
+  var partKey = coordsPct && coordsPct.part;
+  if (partKey && entry[partKey]) return 'floors/' + entry[partKey];
+  return null;
+}
+
+// เวอร์ชันสำหรับพิมพ์ใบตำแหน่งติดตั้ง — ถ้าไม่มีรูปเวอร์ชันพิมพ์แยก จะ fallback ไปใช้รูปแผนที่ปกติ
+var FLOOR_IMAGE_FILES_PRINT = {};
+function getFloorImagePrintSrc(floor, coordsPct) {
+  var entry = FLOOR_IMAGE_FILES_PRINT[floor];
+  if (entry) {
+    if (typeof entry === 'string') return 'floors/' + entry;
+    var partKey = coordsPct && coordsPct.part;
+    if (partKey && entry[partKey]) return 'floors/' + entry[partKey];
+  }
+  return getFloorImageSrc(floor, coordsPct);
+}
+
+function openMapFull() {
+  if (selIdx === null) return;
+  var r = RAW[selIdx];
+  var mid = (r[0] || '').trim();
+  var floor = String(r[6] || '').trim();
+  var status = getDisplayStatus(selIdx);
+  var isBroken = status === 'broken';
+
+  document.getElementById('mapMachineTag').textContent = mid;
+
+  var floorZone = 'ชั้น '+r[6]+' · โซน '+(r[5]||'-');
+  document.getElementById('ml-id2').textContent = mid;
+  document.getElementById('ml-sub2').textContent = floorZone + ' · ' + (isBroken ? '⚠ ชำรุด' : '✓ ปกติ');
+
+  var glow = document.getElementById('mglow2');
+  var box  = document.getElementById('mbox2');
+  if (isBroken) { glow.classList.add('red'); box.classList.add('red'); }
+  else { glow.classList.remove('red'); box.classList.remove('red'); }
+
+  var floorCoords = FLOOR_COORDS[floor] || {};
+  var coordsPct = floorCoords[mid] || floorCoords[mid.toUpperCase()];
+
+  var img = document.getElementById('mapFloorImg');
+  var imgSrc = getFloorImageSrc(floor, coordsPct);
+  var hasFloorImg = !!imgSrc;
+  if (hasFloorImg) { img.src = imgSrc; }
+
+  var marker = document.getElementById('mapMarker2');
+  var coordsPx = null;
+  if (coordsPct && hasFloorImg) {
+    img.onload = function(){
+      coordsPx = [ coordsPct.x/100*img.naturalWidth, coordsPct.y/100*img.naturalHeight ];
+      marker.style.left = coordsPx[0]+'px';
+      marker.style.top  = coordsPx[1]+'px';
+      marker.style.display = '';
+      var vp = document.getElementById('mapVP');
+      _mScale = 1.8;
+      _mPanX = vp.clientWidth/2 - coordsPx[0]*_mScale;
+      _mPanY = vp.clientHeight/2 - coordsPx[1]*_mScale;
+      _mApply();
+    };
+  } else {
+    marker.style.display = 'none';
+    img.onload = function(){ mapReset(); };
+  }
+
+  document.getElementById('mapModalFull').classList.add('open');
+  _currentMachineId = mid.toLowerCase();
+  if (!hasFloorImg) {
+    setTimeout(function(){
+      showPickToast('⚠️ ยังไม่มีรูปแผนผังชั้น ' + floor + ' — อัปโหลดไฟล์ floors/' + (FLOOR_IMAGE_FILES[floor]||'?') + ' ขึ้น GitHub ก่อน', 4000);
+    }, 200);
+  } else if (!coordsPct) {
+    setTimeout(function(){
+      showPickToast('📍 เครื่องนี้ยังไม่ได้ปักหมุด — กด "เลือกพิกัด" เพื่อปักตำแหน่ง', 4000);
+    }, 200);
+  }
+}
+
+function closeMapFull() {
+  document.getElementById('mapModalFull').classList.remove('open');
+  if (_pickMode) togglePickMode();
+}
+
+// ─── COORDINATE PICKER — คลิกบนแผนผังเพื่อบันทึกพิกัด machine ───
+var _pickMode = false;
+var _currentMachineId = null;
+var MACHINE_COORDS = {};
+
+function togglePickMode() {
+  var vp  = document.getElementById('mapVP');
+  var btn = document.getElementById('btnPickCoord');
+  _pickMode = !_pickMode;
+  if (_pickMode) {
+    vp.classList.add('pick-mode');
+    btn.classList.add('active');
+    btn.textContent = '❌ ยกเลิก';
+    showPickToast('📍 คลิกบนแผนผังเพื่อบันทึกตำแหน่งของ ' + (_currentMachineId || '').toUpperCase(), 0);
+  } else {
+    vp.classList.remove('pick-mode');
+    btn.classList.remove('active');
+    btn.textContent = '📍 เลือกพิกัด';
+    hideCrosshair(); hidePickToast();
+  }
+}
+function showPickToast(msg, duration) {
+  var t = document.getElementById('pickToast');
+  t.textContent = msg; t.classList.add('show');
+  if (duration > 0) setTimeout(function(){ t.classList.remove('show'); }, duration);
+}
+function hidePickToast() {
+  var t = document.getElementById('pickToast');
+  if (t) t.classList.remove('show');
+}
+function hideCrosshair() {
+  var ch = document.getElementById('pickCrosshair');
+  var cc = document.getElementById('pickCircle');
+  if (ch) ch.style.display = 'none';
+  if (cc) cc.style.display = 'none';
+}
+(function(){
+  var vp = document.getElementById('mapVP');
+  if (!vp) return;
+  vp.addEventListener('mousemove', function(e) {
+    if (!_pickMode) return;
+    var r = vp.getBoundingClientRect();
+    var vpX = e.clientX - r.left, vpY = e.clientY - r.top;
+    var ch = document.getElementById('pickCrosshair');
+    var cc = document.getElementById('pickCircle');
+    ch.style.left = vpX+'px'; ch.style.top = vpY+'px'; ch.style.display='block';
+    cc.style.left = vpX+'px'; cc.style.top = vpY+'px'; cc.style.display='block';
+  });
+  vp.addEventListener('mouseleave', function() { if (_pickMode) hideCrosshair(); });
+  vp.addEventListener('click', function(e) {
+    if (!_pickMode) return;
+    var r = vp.getBoundingClientRect();
+    var vpX = e.clientX - r.left, vpY = e.clientY - r.top;
+    var img = document.getElementById('mapFloorImg');
+    var imgX = (vpX - _mPanX) / _mScale;
+    var imgY = (vpY - _mPanY) / _mScale;
+    var pctX = img.naturalWidth ? (imgX / img.naturalWidth * 100) : 0;
+    var pctY = img.naturalHeight ? (imgY / img.naturalHeight * 100) : 0;
+    var mid = _currentMachineId;
+    if (!mid) { showPickToast('⚠️ ไม่พบ Machine ID', 2000); return; }
+
+    var r_ = RAW[selIdx];
+    var floor = String(r_[6] || '').trim();
+    if (!FLOOR_COORDS[floor]) FLOOR_COORDS[floor] = {};
+    FLOOR_COORDS[floor][r_[0].trim()] = {x: Math.round(pctX*100)/100, y: Math.round(pctY*100)/100};
+    MACHINE_COORDS[mid] = [Math.round(imgX), Math.round(imgY)];
+
+    var marker = document.getElementById('mapMarker2');
+    if (marker) {
+      marker.style.left = imgX + 'px'; marker.style.top = imgY + 'px'; marker.style.display = '';
+    }
+    showPickToast('✅ บันทึกพิกัด [' + pctX.toFixed(1) + '%, ' + pctY.toFixed(1) + '%] สำหรับ ' + mid.toUpperCase(), 3500);
+    togglePickMode();
+    _mScale = 1.8;
+    _mPanX = vp.clientWidth/2 - imgX*_mScale;
+    _mPanY = vp.clientHeight/2 - imgY*_mScale;
+    _mApply();
+  });
+})();
+
+var _origOpenMapFull = openMapFull;
+openMapFull = function() {
+  _origOpenMapFull();
+  if (selIdx !== null) { _currentMachineId = (RAW[selIdx][0] || '').trim().toLowerCase(); }
+};
+
+// ── Export / Copy FLOOR_COORDS ──────────────────────────────
+function openExportCoords() {
+  var lines = ['var FLOOR_COORDS = ' + JSON.stringify(FLOOR_COORDS, null, 2) + ';'];
+  var ta = document.getElementById('exportTA');
+  if (ta) ta.value = lines.join('\n');
+  var ep = document.getElementById('exportPopup');
+  if (ep) ep.classList.add('open');
+}
+function closeExportCoords() {
+  var ep = document.getElementById('exportPopup');
+  if (ep) ep.classList.remove('open');
+}
+function copyExportCoords() {
+  var ta = document.getElementById('exportTA');
+  if (!ta) return;
+  ta.select(); document.execCommand('copy');
+  showPickToast('✅ คัดลอกแล้ว! นำไปวางแทน var FLOOR_COORDS ในโค้ด', 2200);
+}
+// ─── LOCATION SHEET PREVIEW (ใบตำแหน่งติดตั้ง สำหรับสั่งซื้อเครื่องทดแทน) ─────
+function closeLocationPreview() {
+  const ov = document.getElementById('loc-overlay');
+  if (ov) { ov.classList.remove('active'); ov.style.display = 'none'; }
+}
+
+function showLocationSheetPreview() {
+  const idx = pmSelIdx;
+  if (idx === undefined || idx === null) return;
+  const r = RAW[idx];
+  if (!r) return;
+
+  const machineId = (r[0] || '-').toString();
+  const assetNum  = r[1] || '-';
+  const type      = r[3] || '-';
+  const model     = r[8] || '-';
+  const location  = r[4] || '-';
+  const zone      = r[5] || '-';
+  const floor     = String(r[6] || '').trim();
+  const dateDisp  = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  const safe = t => (t||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const floorCoords = FLOOR_COORDS[floor] || {};
+  const coordsPct = floorCoords[machineId] || floorCoords[machineId.toUpperCase()];
+  const imgSrc = getFloorImagePrintSrc(floor, coordsPct);
+
+  if (!coordsPct || !imgSrc) {
+    alert('⚠️ ชั้น ' + floor + ' ยังไม่มีการปักหมุดตำแหน่งเครื่อง ' + machineId + ' — เปิด "🗺 ดูตำแหน่งบนแผนที่" แล้วกด "📍 เลือกพิกัด" เพื่อปักหมุดก่อน');
+    return;
+  }
+
+  const ov = document.getElementById('loc-overlay');
+  document.getElementById('loc-page').innerHTML = '<p style="text-align:center;padding:60px 0;color:#888;">⏳ กำลังโหลดแผนผัง...</p>';
+  ov.style.display = 'flex';
+  ov.classList.add('active');
+  ov.scrollTop = 0;
+
+  const headerHtml = `
+<h1 style="text-align:center;font-size:14px;font-weight:700;margin:0 0 2px;">แผนผังแสดงตำแหน่งติดตั้ง AHU/FCU</h1>
+<p style="text-align:center;font-size:10px;font-weight:600;margin:0 0 1px;">ใช้ประกอบการสั่งซื้อเครื่องทดแทน</p>
+<p style="text-align:center;font-size:9px;color:#000;margin:0 0 5px;">ประจำอาคารภูมิสิริมังคลานุสรณ์ &nbsp; โรงพยาบาลจุฬาลงกรณ์</p>
+<hr style="border:none;border-top:1.5px solid #555;margin:0 0 5px;">
+<table style="width:100%;border-collapse:collapse;margin-bottom:5px;font-size:10.5px;">
+  <tr><td style="font-weight:700;width:110px;padding:1px 3px;">หมายเลขเครื่อง :</td><td style="padding:1px 3px;">${safe(machineId)}</td>
+      <td style="font-weight:700;width:80px;padding:1px 3px 1px 14px;">วันที่พิมพ์ :</td><td style="padding:1px 3px;">${safe(dateDisp)}</td></tr>
+  <tr><td style="font-weight:700;padding:1px 3px;">รหัสครุภัณฑ์ :</td><td style="padding:1px 3px;" colspan="3">${safe(assetNum)}</td></tr>
+  <tr><td style="font-weight:700;padding:1px 3px;">ประเภท :</td><td style="padding:1px 3px;" colspan="3">${safe(type)}</td></tr>
+  <tr><td style="font-weight:700;padding:1px 3px;">ชั้น/โซน :</td><td style="padding:1px 3px;" colspan="3">ชั้น ${safe(floor)} / โซน ${safe(zone)}</td></tr>
+  <tr><td style="font-weight:700;padding:1px 3px;">สถานที่ติดตั้ง :</td><td style="padding:1px 3px;" colspan="3">${safe(location)}</td></tr>
+  <tr><td style="font-weight:700;padding:1px 3px;">ขนาด (BTU/hr) :</td><td style="padding:1px 3px;" colspan="3">${safe(model)}</td></tr>
+</table>
+<hr style="border:none;border-top:1.5px solid #555;margin:0 0 5px;">`;
+
+  const ZOOM = 2.6;
+  const BOX_W_MM = 170, BOX_H_MM = 145;
+  const ASPECT = BOX_H_MM / BOX_W_MM;
+
+  function renderMap(natW, natH) {
+    let mapHtml;
+    if (natW && natH) {
+      const leftPct = 50 - coordsPct.x * ZOOM;
+      const topPct  = 50 - coordsPct.y * ZOOM * (natH / natW) / ASPECT;
+      mapHtml = `
+<div style="position:relative;width:${BOX_W_MM}mm;height:${BOX_H_MM}mm;margin:0 auto;background:#fff;border:1px solid #333;overflow:hidden;">
+  <img src="${imgSrc}" style="position:absolute;width:${ZOOM*100}%;height:auto;left:${leftPct}%;top:${topPct}%;">
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);text-align:center;pointer-events:none;">
+    <div style="background:#fff;border:2px solid #d40000;border-radius:4px;padding:3px 10px;font-size:15px;font-weight:700;color:#d40000;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);margin-bottom:2px;">${safe(machineId)}</div>
+    <div style="font-size:20px;color:#d40000;line-height:1;">▼</div>
+  </div>
+  <div style="position:absolute;left:50%;top:50%;width:16px;height:16px;margin-left:-8px;margin-top:-8px;border-radius:50%;background:#ff2020;border:2px solid #fff;box-shadow:0 0 5px rgba(255,0,0,.9);"></div>
+</div>
+<p style="text-align:center;font-size:9px;color:#555;margin-top:3px;">📍 ซูมเฉพาะโซนตำแหน่งเครื่องบนแผนผังชั้น ${safe(floor)}</p>`;
+    } else {
+      mapHtml = `
+<div style="position:relative;width:100%;margin:0 auto;">
+  <img src="${imgSrc}" style="width:100%;display:block;border:1px solid #333;">
+  <div style="position:absolute;left:${coordsPct.x}%;top:${coordsPct.y}%;transform:translate(-50%,-100%);text-align:center;pointer-events:none;">
+    <div style="background:#fff;border:2px solid #d40000;border-radius:4px;padding:3px 10px;font-size:15px;font-weight:700;color:#d40000;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);margin-bottom:2px;">${safe(machineId)}</div>
+    <div style="font-size:20px;color:#d40000;line-height:1;">▼</div>
+  </div>
+  <div style="position:absolute;left:${coordsPct.x}%;top:${coordsPct.y}%;width:16px;height:16px;margin-left:-8px;margin-top:-8px;border-radius:50%;background:#ff2020;border:2px solid #fff;box-shadow:0 0 5px rgba(255,0,0,.9);"></div>
+</div>
+<p style="text-align:center;font-size:9px;color:#c0392b;margin-top:3px;">⚠️ โหลดรูปแผนผังไม่สำเร็จ (แสดงแบบเต็มภาพแทน) — ตรวจสอบว่าอัปโหลดไฟล์ floors/ ขึ้น GitHub แล้วหรือยัง</p>`;
+    }
+    document.getElementById('loc-page').innerHTML = headerHtml + mapHtml;
+  }
+
+  const probe = new Image();
+  probe.onload  = function(){ renderMap(probe.naturalWidth, probe.naturalHeight); };
+  probe.onerror = function(){ renderMap(null, null); };
+  probe.src = imgSrc;
+}
+// ─── END LOCATION SHEET PREVIEW ──────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════
+// END MAP MODULE
+// ═══════════════════════════════════════════════════════════════════════════
+
 </script>
+
+<!-- ── MAP FULLSCREEN MODAL ── -->
+<div class="map-modal-full" id="mapModalFull">
+  <div class="map-topbar2">
+    <div class="map-topbar2-info">
+      <h2>🗺 แผนผังตำแหน่งเครื่อง AHU/FCU</h2>
+      <div class="map-sub">กำลังระบุตำแหน่ง &nbsp;<span class="machine-tag-map" id="mapMachineTag">—</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-pick-coord" id="btnPickCoord" onclick="togglePickMode()" title="คลิกบนแผนผังเพื่อบันทึกพิกัด">📍 เลือกพิกัด</button>
+      <button class="btn-export-coords" onclick="openExportCoords()" title="Export พิกัดทั้งหมด">💾 Export</button>
+      <button class="btn-close-mapfull" onclick="closeMapFull()">✕ ปิด</button>
+    </div>
+  </div>
+  <div class="map-viewport2" id="mapVP">
+    <div class="map-inner2" id="mapInner2">
+      <img src="" width="1200" height="850" alt="Floor Plan" id="mapFloorImg">
+      <div class="map-marker2" id="mapMarker2" style="left:0;top:0;display:none;">
+        <div class="marker-glow2" id="mglow2"></div>
+        <div class="marker-box2" id="mbox2">
+          <span class="mb-id" id="ml-id2">—</span>
+          <span class="mb-sub" id="ml-sub2">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="pick-crosshair" id="pickCrosshair"></div>
+    <div class="pick-circle"    id="pickCircle"></div>
+    <div class="pick-toast"     id="pickToast"></div>
+    <div class="zoom-ctrls">
+      <button class="zbtn" onclick="mapZoom(1.25)">+</button>
+      <div class="zlabel" id="zoomLbl">100%</div>
+      <button class="zbtn" onclick="mapZoom(0.8)">−</button>
+      <button class="zbtn" onclick="mapReset()" title="Reset" style="font-size:12px;">⌂</button>
+    </div>
+  </div>
+  <div class="map-legend2">
+    <div class="leg2"><div class="leg2-dot" style="background:#ffee44;box-shadow:0 0 6px #ffcc00;"></div>ตำแหน่งเครื่อง (กระพริบ)</div>
+    <div class="leg2"><div class="leg2-dot" style="background:#ff3333;"></div>สถานะชำรุด</div>
+    <div class="map-hint">Scroll เพื่อซูม · ลากเพื่อเลื่อน</div>
+  </div>
+</div>
+
+<!-- ── EXPORT COORDS POPUP ── -->
+<div class="export-popup" id="exportPopup">
+  <div class="export-box">
+    <h3>💾 Export FLOOR_COORDS — วางแทนใน code</h3>
+    <textarea id="exportTA" readonly></textarea>
+    <div class="export-box-btns">
+      <button class="btn-copy-coords" onclick="copyExportCoords()">📋 Copy ทั้งหมด</button>
+      <button class="btn-close-export" onclick="closeExportCoords()">✕ ปิด</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
