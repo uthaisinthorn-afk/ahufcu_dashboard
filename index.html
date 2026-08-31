@@ -61,6 +61,33 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .floor-panel{margin-bottom:24px;animation:fadeIn .3s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .floor-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;user-select:none}
+.floor-map-btn{background:rgba(0,255,80,.1);border:1px solid rgba(0,255,80,.3);color:#00ff50;border-radius:6px;
+  font-family:'Sarabun',sans-serif;font-size:11.5px;font-weight:600;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.floor-map-btn:hover{background:rgba(0,255,80,.2);box-shadow:0 0 10px rgba(0,255,80,.25)}
+
+/* ── FLOOR OVERVIEW MAP (แผนที่รวมทั้งชั้น) ── */
+#floorOverviewModal{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;font-family:'Sarabun',sans-serif}
+#floorOverviewModal.open{display:flex}
+.fov-topbar{background:#060606;border-bottom:1px solid #1a2a1a;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.fov-topbar h2{color:#00ff50;font-size:14px;font-weight:600;margin:0}
+.fov-topbar .fov-sub{color:#556;font-size:11px;margin-top:2px}
+.fov-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:11px;color:#9aa}
+.fov-leg-item{display:flex;align-items:center;gap:5px}
+.fov-leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.fov-viewport{flex:1;position:relative;overflow:hidden;background:#000;cursor:grab}
+.fov-viewport.pick-mode{cursor:crosshair !important}
+.fov-viewport:active{cursor:grabbing}
+.fov-inner{position:absolute;top:0;left:0;transform-origin:0 0}
+.fov-inner img{display:block;user-select:none;-webkit-user-drag:none}
+.fov-marker{position:absolute;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:3px;
+  border:1.5px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.7);cursor:pointer;z-index:5}
+.fov-marker.sel{box-shadow:0 0 0 3px #ffd700,0 0 10px rgba(255,215,0,.7);z-index:6}
+.fov-zoom-ctrls{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.fov-toolbar{background:#060606;border-top:1px solid #1a1a1a;padding:8px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fov-picker-select{background:#0a1a0a;border:1px solid #1a2a1a;color:#cde;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;padding:6px 10px;min-width:220px}
+.fov-machine-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:#111;border:1px solid #333;color:#9aa;cursor:pointer;white-space:nowrap}
+.fov-machine-tag.placed{border-color:#00ff50;color:#00ff50}
+.fov-machine-tag.current{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.1)}
 .floor-lbl{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--ahu-color);background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:7px;padding:5px 14px;flex-shrink:0}
 .floor-div{flex:1;height:1px;background:var(--border)}
 .floor-cnt{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;white-space:nowrap}
@@ -611,9 +638,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       <div><label>หมายเลขเครื่อง</label><input class="pm-input" id="pm-machineid" type="text" readonly style="opacity:.6"></div>
       <div><label>ประเภท</label><input class="pm-input" id="pm-type-val" type="text" readonly style="opacity:.6"></div>
     </div></div>
+    <div class="pm-section">
+      <label>หมายเลขครุภัณฑ์</label>
+      <div style="display:flex;gap:18px;margin:4px 0 8px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:400;font-size:13px;color:#cfd8e8;">
+          <input type="radio" name="pm-asset-has" id="pm-asset-has-yes" value="yes" onchange="pmUpdateAssetHasUI()"> มีหมายเลขครุภัณฑ์
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:400;font-size:13px;color:#cfd8e8;">
+          <input type="radio" name="pm-asset-has" id="pm-asset-has-no" value="no" onchange="pmUpdateAssetHasUI()"> ไม่มีหมายเลขครุภัณฑ์
+        </label>
+      </div>
+      <input class="pm-input" id="pm-asset" type="text" placeholder="กรอกหมายเลขครุภัณฑ์">
+    </div>
     <div class="pm-section"><div class="pm-row2">
-      <div><label>หมายเลขครุภัณฑ์ (แก้ไขได้)</label><input class="pm-input" id="pm-asset" type="text" placeholder="กรอกหมายเลขครุภัณฑ์"></div>
       <div><label>ขนาด (BTU/hr)</label><input class="pm-input" id="pm-size-val" type="text" readonly style="opacity:.6"></div>
+      <div><label>🔗 เบอร์สายพาน <span style="color:#ff5555">*</span></label><input class="pm-input" id="pm-belt-no" type="text" placeholder="กรอกเบอร์สายพาน"></div>
     </div></div>
     <div class="pm-section"><label>สถานที่ติดตั้ง</label><input class="pm-input" id="pm-location" type="text" placeholder="ห้อง / บริเวณ"></div>
     <div class="pm-section"><label>📐 ขนาด Filter</label><input class="pm-input" id="pm-filter-size" type="text" placeholder="เช่น 20x20x2 นิ้ว"></div>
@@ -767,6 +806,18 @@ const defaceFlag = (()=>{try{return JSON.parse(localStorage.getItem('ac_dfflag')
 function saveDefaceFlag(){try{localStorage.setItem('ac_dfflag',JSON.stringify(defaceFlag));}catch(e){}}
 const filterSizeMap = (()=>{try{return JSON.parse(localStorage.getItem('ac_filtersize')||'{}');}catch(e){return {};}})();
 function saveFilterSizeMap(){try{localStorage.setItem('ac_filtersize',JSON.stringify(filterSizeMap));}catch(e){}}
+const beltNoMap = (()=>{try{return JSON.parse(localStorage.getItem('ac_beltno')||'{}');}catch(e){return {};}})();
+function saveBeltNoMap(){try{localStorage.setItem('ac_beltno',JSON.stringify(beltNoMap));}catch(e){}}
+// สลับสถานะช่องกรอกหมายเลขครุภัณฑ์ตามที่เลือก "มี/ไม่มี" — ถ้า "ไม่มี" ให้ล้างค่าและไม่บังคับกรอก
+function pmUpdateAssetHasUI(){
+  const yesEl=document.getElementById('pm-asset-has-yes');
+  const assetEl=document.getElementById('pm-asset');
+  const has=yesEl&&yesEl.checked;
+  assetEl.disabled=!has;
+  assetEl.style.opacity=has?'1':'.5';
+  assetEl.placeholder=has?'กรอกหมายเลขครุภัณฑ์ (บังคับกรอก)':'ไม่มีหมายเลขครุภัณฑ์';
+  if(!has)assetEl.value='';
+}
 // ── PM DRAFT PERSISTENCE — เก็บข้อมูลที่กรอกค้างไว้ต่อเครื่อง (สำหรับกรณีรอผู้รับเหมาล้างเครื่องแล้วต้องออกไปทำเครื่องอื่นก่อน) ──
 const pmDraftMap = (()=>{try{return JSON.parse(localStorage.getItem('ac_pmdraft')||'{}');}catch(e){return {};}})();
 function savePmDraftMap(){try{localStorage.setItem('ac_pmdraft',JSON.stringify(pmDraftMap));}catch(e){}}
@@ -784,6 +835,8 @@ function pmSaveDraft(){
     amp_before:g('pm-amp-before'),amp_after:g('pm-amp-after'),
     temp_before:g('pm-temp-before'),temp_after:g('pm-temp-after'),
     operator:g('pm-operator'),date:g('pm-date'),asset:g('pm-asset'),location:g('pm-location'),
+    assetHas:(document.getElementById('pm-asset-has-yes')&&document.getElementById('pm-asset-has-yes').checked)?'yes':(document.getElementById('pm-asset-has-no')&&document.getElementById('pm-asset-has-no').checked)?'no':'',
+    beltNo:g('pm-belt-no'),
     ts:Date.now()
   };
   const isEmpty=!draft.round&&!draft.status&&!draft.note&&!draft.unavailReason&&
@@ -822,6 +875,13 @@ function pmApplyDraft(draft){
   if(draft.date){const el=document.getElementById('pm-date');if(el)el.value=draft.date;}
   if(draft.asset){const el=document.getElementById('pm-asset');if(el)el.value=draft.asset;}
   if(draft.location){const el=document.getElementById('pm-location');if(el)el.value=draft.location;}
+  if(draft.assetHas){
+    document.getElementById('pm-asset-has-yes').checked=draft.assetHas==='yes';
+    document.getElementById('pm-asset-has-no').checked=draft.assetHas==='no';
+    pmUpdateAssetHasUI();
+    if(draft.assetHas==='yes'&&draft.asset){document.getElementById('pm-asset').value=draft.asset;}
+  }
+  if(draft.beltNo){const el=document.getElementById('pm-belt-no');if(el)el.value=draft.beltNo;}
   pmCheckThresholds();
 }
 function pmClearDraft(machineId){
@@ -918,6 +978,7 @@ function render(){
       +'<div class="floor-lbl">ชั้น '+fl+'</div>'
       +'<div class="floor-div"></div>'
       +'<div class="floor-cnt">'+floorCount+' เครื่อง</div>'
+      +'<button class="floor-map-btn" data-fl-map="'+fl+'">🗺 แผนที่</button>'
       +'<div class="floor-tog" id="ft-'+fl+'">▾</div>'
       +'</div>'
       +'<div id="fb-'+fl+'">'+floorParts.join('')+'</div>'
@@ -1217,6 +1278,12 @@ function openPMPanel(i){
   document.getElementById('pm-size-val').value=r[8]?Number(r[8]).toLocaleString()+' BTU/hr':'-';
   document.getElementById('pm-location').value=r[4]||'';
   document.getElementById('pm-filter-size').value=filterSizeMap[r[0]]||'';
+  document.getElementById('pm-belt-no').value=beltNoMap[r[0]]||'';
+  const hasAssetInit=!!(r[1]&&String(r[1]).trim());
+  document.getElementById('pm-asset-has-yes').checked=hasAssetInit;
+  document.getElementById('pm-asset-has-no').checked=!hasAssetInit;
+  pmUpdateAssetHasUI();
+  if(hasAssetInit)document.getElementById('pm-asset').value=r[1]||'';
   document.getElementById('pm-date').value=new Date().toISOString().slice(0,10);
   const sizeNum=r[8]?parseFloat(String(r[8]).replace(/,/g,'')):0;
   const sizeLabel=(sizeNum>=1000)?Number(sizeNum).toLocaleString()+' BTU/hr':'-';
@@ -1429,6 +1496,15 @@ async function pmDoSubmit(){
   if(!pmStatus){showToast('กรุณาเลือกสถานะ','warn');return;}
   const op=document.getElementById('pm-operator').value;
   if(!op){showToast('กรุณาเลือกผู้ปฏิบัติงาน','warn');return;}
+  const assetHasYes=document.getElementById('pm-asset-has-yes').checked;
+  const assetHasNo=document.getElementById('pm-asset-has-no').checked;
+  if(!assetHasYes&&!assetHasNo){showToast('กรุณาเลือกว่ามีหรือไม่มีหมายเลขครุภัณฑ์','warn');return;}
+  if(assetHasYes&&!document.getElementById('pm-asset').value.trim()){
+    showToast('กรุณากรอกหมายเลขครุภัณฑ์','warn');document.getElementById('pm-asset').focus();return;
+  }
+  if(!document.getElementById('pm-belt-no').value.trim()){
+    showToast('กรุณากรอกเบอร์สายพาน','warn');document.getElementById('pm-belt-no').focus();return;
+  }
   let unavailReason='';
   if(pmStatus==='unavailable'){
     unavailReason=document.getElementById('pm-unavail-reason').value.trim();
@@ -1439,10 +1515,14 @@ async function pmDoSubmit(){
   const btn=document.getElementById('pm-submit-btn');
   btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;
   if(pmSelIdx!==null){
-    const na=document.getElementById('pm-asset').value.trim();if(na)RAW[pmSelIdx][1]=na;
+    const na=document.getElementById('pm-asset').value.trim();
+    if(assetHasYes&&na){RAW[pmSelIdx][1]=na;}else if(assetHasNo){RAW[pmSelIdx][1]='';}
     const fsz=document.getElementById('pm-filter-size').value.trim();
     if(fsz){filterSizeMap[RAW[pmSelIdx][0]]=fsz;}else{delete filterSizeMap[RAW[pmSelIdx][0]];}
     saveFilterSizeMap();
+    const beltNo=document.getElementById('pm-belt-no').value.trim();
+    if(beltNo){beltNoMap[RAW[pmSelIdx][0]]=beltNo;}else{delete beltNoMap[RAW[pmSelIdx][0]];}
+    saveBeltNoMap();
     if(pmStatus==='ok'){overrides[pmSelIdx]='ok';pmSet.add(pmSelIdx);}
     else if(pmStatus==='broken'){overrides[pmSelIdx]='broken';pmSet.delete(pmSelIdx);}
     else if(pmStatus==='deface'){overrides[pmSelIdx]='deface';pmSet.add(pmSelIdx);}
@@ -1469,6 +1549,8 @@ async function pmDoSubmit(){
     machine_type:r[3]||'',machine_no:pmGetModel(),machine_id:r[0]||'',
     asset_no:document.getElementById('pm-asset').value,size_btu:r[8]||'',
     filter_size:document.getElementById('pm-filter-size').value,
+    asset_has:assetHasYes?'มี':'ไม่มี',
+    belt_no:document.getElementById('pm-belt-no').value,
     pm_round:pmRound||'-',
     checklist:pmStatus==='unavailable'?'-':pmGetChecklist(),work_status:pmStatus,status_label:sm2[pmStatus]||pmStatus,
     deface_reasons:pmStatus==='deface'?pmGetDefaceReasons():'-',
@@ -1687,8 +1769,10 @@ function initApp(){
     });
   }
 
-  // event delegation สำหรับ mainContent (keycap click, floor header click)
+  // event delegation สำหรับ mainContent (keycap click, floor header click, floor map button)
   document.getElementById('mainContent').addEventListener('click',function(e){
+    const mapBtn=e.target.closest('.floor-map-btn');
+    if(mapBtn){e.stopPropagation();openFloorOverviewMap(mapBtn.dataset.flMap);return;}
     const key=e.target.closest('.fkey');
     if(key){openModal(parseInt(key.dataset.i));return;}
     const hdr=e.target.closest('.floor-hdr');
@@ -2130,6 +2214,213 @@ function showBreakdownPreview(){
 // ─── END PRINT ────────────────────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════════════════════════
+// FLOOR OVERVIEW MAP MODULE — แผนที่รวมทั้งชั้น (ทุกโซนในภาพเดียว พร้อม legend)
+// สี: แดง=ชำรุด, เขียว=ปกติ, ม่วง=ไม่มีครุภัณฑ์, ดำ=มีครุภัณฑ์แต่ยังไม่ได้ทำ PM
+// ═══════════════════════════════════════════════════════════════════════════
+// ยังไม่มีไฟล์แผนผังรวมทั้งชั้น — ใส่ชื่อไฟล์จริงทีหลัง (ต่างจาก FLOOR_IMAGE_FILES ที่ใช้กับแผนที่ต่อเครื่อง เพราะภาพนี้ต้องรวมทุกโซนไว้ในไฟล์เดียว)
+var FLOOR_OVERVIEW_IMAGES = {
+  "1": "floor1_full.png", "2": "floor2_full.png", "3": "floor3_full.png", "4": "floor4_full.png",
+  "5": "floor5_full.png", "6": "floor6_full.png", "7": "floor7_full.png", "8": "floor8_full.png",
+  "9": "floor9_full.png", "10": "floor10_full.png", "11": "floor11_full.png", "12": "floor12_full.png",
+  "13": "floor13_full.png", "14": "floor14_full.png", "15": "floor15_full.png", "16": "floor16_full.png",
+  "17": "floor17_full.png", "18": "floor18_full.png", "19": "floor19_full.png", "20": "floor20_full.png",
+  "21": "floor21_full.png", "22": "floor22_full.png", "23": "floor23_full.png", "24": "floor24_full.png",
+  "25": "floor25_full.png", "26": "floor26_full.png", "27": "floor27_full.png", "28": "floor28_full.png",
+  "B1": "floorB1_full.png", "B2": "floorB2_full.png", "B3": "floorB3_full.png", "B4": "floorB4_full.png",
+  "M": "floorM_full.png", "30 31 32 ": "floorRoof_full.png"
+};
+// ยังว่างเปล่า — ปักหมุดผ่านหน้าแผนที่รวมทั้งชั้น แล้ว Export มาแปะแทนตรงนี้
+var FLOOR_COORDS_OVERVIEW = {};
+
+function getFloorOverviewImageSrc(floor){
+  var f = FLOOR_OVERVIEW_IMAGES[floor];
+  return f ? ('floors/' + f) : null;
+}
+// สีสถานะเครื่องบนแผนที่รวม: ชำรุด > ไม่มีครุภัณฑ์ > รอ PM > ปกติ
+function pmFloorColor(idx){
+  if (getStatus(idx) === 'broken') return 'red';
+  var hasAsset = !!(RAW[idx][1] && String(RAW[idx][1]).trim());
+  if (!hasAsset) return 'purple';
+  if (!pmSet.has(idx)) return 'black';
+  return 'green';
+}
+var FOV_COLOR_HEX = {red:'#ff3b3b', green:'#22ff66', purple:'#c060ff', black:'#222'};
+var FOV_COLOR_LABEL = {red:'ชำรุด', green:'ปกติ', purple:'ไม่มีครุภัณฑ์', black:'มีครุภัณฑ์ / ยังไม่ทำ PM'};
+
+var _fovScale=1,_fovPanX=0,_fovPanY=0,_fovDrag=false,_fovSX,_fovSY,_fovSPX,_fovSPY;
+var _fovFloor=null, _fovPickMode=false, _fovCurrentMachine=null;
+
+function _fovApply(){
+  document.getElementById('fovInner').style.transform='translate('+_fovPanX+'px,'+_fovPanY+'px) scale('+_fovScale+')';
+  document.getElementById('fovZoomLbl').textContent=Math.round(_fovScale*100)+'%';
+}
+function fovZoom(f){
+  var vp=document.getElementById('fovViewport');
+  var cx=vp.clientWidth/2,cy=vp.clientHeight/2;
+  _fovPanX=cx+(_fovPanX-cx)*f; _fovPanY=cy+(_fovPanY-cy)*f;
+  _fovScale=Math.min(Math.max(_fovScale*f,0.2),6); _fovApply();
+}
+function fovReset(){
+  var vp=document.getElementById('fovViewport');
+  var img=document.getElementById('fovImg');
+  if(!img.naturalWidth){return;}
+  var sx=vp.clientWidth/img.naturalWidth, sy=vp.clientHeight/img.naturalHeight;
+  _fovScale=Math.min(sx,sy);
+  _fovPanX=(vp.clientWidth-img.naturalWidth*_fovScale)/2;
+  _fovPanY=(vp.clientHeight-img.naturalHeight*_fovScale)/2;
+  _fovApply();
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var vp=document.getElementById('fovViewport');
+  if(!vp) return;
+  vp.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var r=vp.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    var f=e.deltaY<0?1.1:0.9;
+    _fovPanX=mx+(_fovPanX-mx)*f; _fovPanY=my+(_fovPanY-my)*f;
+    _fovScale=Math.min(Math.max(_fovScale*f,0.2),6); _fovApply();
+  },{passive:false});
+  vp.addEventListener('mousedown',function(e){if(_fovPickMode)return;_fovDrag=true;_fovSX=e.clientX;_fovSY=e.clientY;_fovSPX=_fovPanX;_fovSPY=_fovPanY;});
+  window.addEventListener('mousemove',function(e){if(!_fovDrag)return;_fovPanX=_fovSPX+(e.clientX-_fovSX);_fovPanY=_fovSPY+(e.clientY-_fovSY);_fovApply();});
+  window.addEventListener('mouseup',function(){_fovDrag=false;});
+  vp.addEventListener('mousemove',function(e){
+    if(!_fovPickMode)return;
+    var r=vp.getBoundingClientRect();
+    var vpX=e.clientX-r.left, vpY=e.clientY-r.top;
+    var ch=document.getElementById('fovCrosshair'), cc=document.getElementById('fovCircle');
+    ch.style.left=vpX+'px'; ch.style.top=vpY+'px'; ch.style.display='block';
+    cc.style.left=vpX+'px'; cc.style.top=vpY+'px'; cc.style.display='block';
+  });
+  vp.addEventListener('click',function(e){
+    if(!_fovPickMode)return;
+    if(!_fovCurrentMachine){fovToast('⚠️ กรุณาเลือกเครื่องจาก dropdown ก่อน',2500);return;}
+    var r=vp.getBoundingClientRect();
+    var vpX=e.clientX-r.left, vpY=e.clientY-r.top;
+    var img=document.getElementById('fovImg');
+    var imgX=(vpX-_fovPanX)/_fovScale, imgY=(vpY-_fovPanY)/_fovScale;
+    var pctX=img.naturalWidth?(imgX/img.naturalWidth*100):0;
+    var pctY=img.naturalHeight?(imgY/img.naturalHeight*100):0;
+    if(!FLOOR_COORDS_OVERVIEW[_fovFloor])FLOOR_COORDS_OVERVIEW[_fovFloor]={};
+    FLOOR_COORDS_OVERVIEW[_fovFloor][_fovCurrentMachine]={x:Math.round(pctX*100)/100,y:Math.round(pctY*100)/100};
+    fovToast('✅ ปักหมุด '+_fovCurrentMachine.toUpperCase()+' แล้ว',2200);
+    fovRenderMarkers();
+    fovRenderMachineList();
+  });
+});
+function fovToast(msg,dur){
+  var t=document.getElementById('fovToast');
+  t.textContent=msg; t.classList.add('show');
+  if(dur>0)setTimeout(function(){t.classList.remove('show');},dur);
+}
+function fovTogglePick(){
+  var vp=document.getElementById('fovViewport');
+  var btn=document.getElementById('fovPickBtn');
+  _fovPickMode=!_fovPickMode;
+  if(_fovPickMode){
+    vp.classList.add('pick-mode'); btn.classList.add('active'); btn.textContent='❌ ยกเลิก';
+    fovToast('📍 เลือกเครื่องจาก dropdown แล้วคลิกตำแหน่งบนแผนผัง',0);
+  } else {
+    vp.classList.remove('pick-mode'); btn.classList.remove('active'); btn.textContent='📍 เลือกพิกัด';
+    document.getElementById('fovCrosshair').style.display='none';
+    document.getElementById('fovCircle').style.display='none';
+    var t=document.getElementById('fovToast'); t.classList.remove('show');
+  }
+}
+function fovGetFloorMachines(floor){
+  var zones=byFloorZone[floor]||{};
+  var out=[];
+  Object.keys(zones).sort().forEach(function(zn){zones[zn].forEach(function(i){out.push(i);});});
+  return out;
+}
+function fovRenderMarkers(){
+  var box=document.getElementById('fovMarkers');
+  var coordsFloor=FLOOR_COORDS_OVERVIEW[_fovFloor]||{};
+  var machines=fovGetFloorMachines(_fovFloor);
+  var html='';
+  machines.forEach(function(i){
+    var mid=(RAW[i][0]||'').trim();
+    var c=coordsFloor[mid];
+    if(!c)return;
+    var color=pmFloorColor(i);
+    var selCls=(mid.toLowerCase()===_fovCurrentMachine)?' sel':'';
+    html+='<div class="fov-marker'+selCls+'" style="left:'+c.x+'%;top:'+c.y+'%;background:'+FOV_COLOR_HEX[color]+';" title="'+mid+'" data-mid="'+mid+'"></div>';
+  });
+  box.innerHTML=html;
+}
+function fovRenderLegend(){
+  var machines=fovGetFloorMachines(_fovFloor);
+  var counts={red:0,green:0,purple:0,black:0};
+  machines.forEach(function(i){counts[pmFloorColor(i)]++;});
+  var order=['green','red','purple','black'];
+  var html=order.map(function(c){
+    return '<div class="fov-leg-item"><div class="fov-leg-dot" style="background:'+FOV_COLOR_HEX[c]+'"></div>'+FOV_COLOR_LABEL[c]+' '+counts[c]+' เครื่อง</div>';
+  }).join('');
+  document.getElementById('fovLegend').innerHTML=html;
+  document.getElementById('fovSub').textContent=machines.length+' เครื่องทั้งหมด';
+}
+function fovRenderMachineList(){
+  var sel=document.getElementById('fovMachinePicker');
+  var tagsBox=document.getElementById('fovMachineTags');
+  var machines=fovGetFloorMachines(_fovFloor);
+  var coordsFloor=FLOOR_COORDS_OVERVIEW[_fovFloor]||{};
+  var optHtml='<option value="">-- เลือกเครื่องเพื่อปักหมุด --</option>';
+  var tagHtml='';
+  machines.forEach(function(i){
+    var mid=(RAW[i][0]||'').trim();
+    var placed=!!coordsFloor[mid];
+    optHtml+='<option value="'+mid+'"'+(mid.toLowerCase()===_fovCurrentMachine?' selected':'')+'>'+(placed?'✅ ':'⬜ ')+mid+'</option>';
+    var curCls=(mid.toLowerCase()===_fovCurrentMachine)?' current':'';
+    var placedCls=placed?' placed':'';
+    tagHtml+='<span class="fov-machine-tag'+placedCls+curCls+'" data-mid="'+mid+'">'+mid+'</span>';
+  });
+  sel.innerHTML=optHtml;
+  tagsBox.innerHTML=tagHtml;
+}
+function openFloorOverviewMap(floor){
+  _fovFloor=floor; _fovCurrentMachine=null;
+  document.getElementById('fovFloorLabel').textContent='ชั้น '+floor;
+  fovRenderLegend();
+  fovRenderMachineList();
+  var img=document.getElementById('fovImg');
+  var imgSrc=getFloorOverviewImageSrc(floor);
+  if(imgSrc){
+    img.onload=function(){fovRenderMarkers();fovReset();};
+    img.src=imgSrc;
+  } else {
+    img.src='';
+    document.getElementById('fovMarkers').innerHTML='';
+    setTimeout(function(){fovToast('⚠️ ยังไม่มีไฟล์แผนผังรวมของชั้น '+floor+' — อัปโหลด floors/'+(FLOOR_OVERVIEW_IMAGES[floor]||'?')+' ขึ้น GitHub ก่อน',4500);},200);
+  }
+  document.getElementById('floorOverviewModal').classList.add('open');
+}
+function closeFloorOverviewMap(){
+  document.getElementById('floorOverviewModal').classList.remove('open');
+  if(_fovPickMode)fovTogglePick();
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var sel=document.getElementById('fovMachinePicker');
+  if(sel){
+    sel.addEventListener('change',function(){
+      _fovCurrentMachine=this.value?this.value.toLowerCase():null;
+      fovRenderMarkers(); fovRenderMachineList();
+    });
+  }
+  var tagsBox=document.getElementById('fovMachineTags');
+  if(tagsBox){
+    tagsBox.addEventListener('click',function(e){
+      var tag=e.target.closest('.fov-machine-tag');
+      if(!tag)return;
+      _fovCurrentMachine=tag.dataset.mid.toLowerCase();
+      document.getElementById('fovMachinePicker').value=tag.dataset.mid;
+      fovRenderMarkers(); fovRenderMachineList();
+    });
+  }
+});
+// ═══════════════════════════════════════════════════════════════════════════
+// END FLOOR OVERVIEW MAP MODULE
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAP MODULE — โหมดแผนที่ตำแหน่งเครื่อง AHU/FCU (ตามแพทเทิร์นระบบ EAF)
 // ═══════════════════════════════════════════════════════════════════════════
 var _mScale=1,_mPanX=0,_mPanY=0,_mDrag=false,_mSX,_mSY,_mSPX,_mSPY;
@@ -2155,7 +2446,7 @@ function mapReset(){
   _mPanY=(vp.clientHeight-img.naturalHeight*_mScale)/2;
   _mApply();
 }
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   var vp=document.getElementById('mapVP');
   if(!vp) return;
   vp.addEventListener('wheel',function(e){
@@ -2171,7 +2462,7 @@ function mapReset(){
   vp.addEventListener('touchstart',function(e){if(e.touches.length===1){_mDrag=true;_mSX=e.touches[0].clientX;_mSY=e.touches[0].clientY;_mSPX=_mPanX;_mSPY=_mPanY;}},{passive:true});
   vp.addEventListener('touchmove',function(e){if(!_mDrag||e.touches.length!==1)return;_mPanX=_mSPX+(e.touches[0].clientX-_mSX);_mPanY=_mSPY+(e.touches[0].clientY-_mSY);_mApply();},{passive:true});
   vp.addEventListener('touchend',function(){_mDrag=false;});
-})();
+});
 
 // ── FLOOR_IMAGE_FILES: ชื่อไฟล์ภาพแผนผังต่อชั้น (โหลดจากโฟลเดอร์ floors/ บน repo) ──
 // ยังไม่มีรูปแผนผัง — ใส่ชื่อไฟล์จริงทีหลัง (เช่น "floor1.png") หรือถ้าชั้นนั้นแยกเป็นหลาย part
@@ -2314,7 +2605,7 @@ function hideCrosshair() {
   if (ch) ch.style.display = 'none';
   if (cc) cc.style.display = 'none';
 }
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   var vp = document.getElementById('mapVP');
   if (!vp) return;
   vp.addEventListener('mousemove', function(e) {
@@ -2356,7 +2647,7 @@ function hideCrosshair() {
     _mPanY = vp.clientHeight/2 - imgY*_mScale;
     _mApply();
   });
-})();
+});
 
 var _origOpenMapFull = openMapFull;
 openMapFull = function() {
@@ -2366,7 +2657,11 @@ openMapFull = function() {
 
 // ── Export / Copy FLOOR_COORDS ──────────────────────────────
 function openExportCoords() {
-  var lines = ['var FLOOR_COORDS = ' + JSON.stringify(FLOOR_COORDS, null, 2) + ';'];
+  var lines = [
+    'var FLOOR_COORDS = ' + JSON.stringify(FLOOR_COORDS, null, 2) + ';',
+    '',
+    'var FLOOR_COORDS_OVERVIEW = ' + JSON.stringify(FLOOR_COORDS_OVERVIEW, null, 2) + ';'
+  ];
   var ta = document.getElementById('exportTA');
   if (ta) ta.value = lines.join('\n');
   var ep = document.getElementById('exportPopup');
@@ -2482,6 +2777,42 @@ function showLocationSheetPreview() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 </script>
+
+<!-- ── FLOOR OVERVIEW MAP MODAL (แผนที่รวมทั้งชั้น) ── -->
+<div id="floorOverviewModal">
+  <div class="fov-topbar">
+    <div>
+      <h2>🗺 แผนที่รวม — <span id="fovFloorLabel">ชั้น -</span></h2>
+      <div class="fov-sub" id="fovSub">-</div>
+    </div>
+    <div class="fov-legend" id="fovLegend"></div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn-export-coords" onclick="openExportCoords()">💾 Export</button>
+      <button class="btn-close-mapfull" onclick="closeFloorOverviewMap()">✕ ปิด</button>
+    </div>
+  </div>
+  <div class="fov-viewport" id="fovViewport">
+    <div class="fov-inner" id="fovInner">
+      <img src="" id="fovImg" alt="Floor Overview">
+      <div id="fovMarkers"></div>
+    </div>
+    <div class="pick-crosshair" id="fovCrosshair"></div>
+    <div class="pick-circle" id="fovCircle"></div>
+    <div class="pick-toast" id="fovToast"></div>
+    <div class="fov-zoom-ctrls">
+      <button class="zbtn" onclick="fovZoom(1.25)">+</button>
+      <div class="zlabel" id="fovZoomLbl">100%</div>
+      <button class="zbtn" onclick="fovZoom(0.8)">−</button>
+      <button class="zbtn" onclick="fovReset()" title="Reset" style="font-size:12px;">⌂</button>
+    </div>
+  </div>
+  <div class="fov-toolbar">
+    <label style="font-size:11px;color:#6a7a90;">ปักหมุดเครื่อง:</label>
+    <select class="fov-picker-select" id="fovMachinePicker"></select>
+    <button class="btn-pick-coord" id="fovPickBtn" onclick="fovTogglePick()">📍 เลือกพิกัด</button>
+    <div id="fovMachineTags" style="display:flex;gap:5px;flex-wrap:wrap;flex:1;max-height:52px;overflow-y:auto;"></div>
+  </div>
+</div>
 
 <!-- ── MAP FULLSCREEN MODAL ── -->
 <div class="map-modal-full" id="mapModalFull">
