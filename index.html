@@ -188,6 +188,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .pm-select,.pm-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#e2e0f0;font-family:'Sarabun',sans-serif;font-size:14px;padding:9px 12px;appearance:none}
 .pm-select:focus,.pm-input:focus{outline:none;border-color:#a78bfa}
 .pm-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pm-valve-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:-2px 0 8px;padding:8px 12px;border-radius:8px;background:rgba(167,139,250,.08);font-size:12.5px;color:#cfd8e8}
+.pm-valve-row label{display:flex;align-items:center;gap:5px;margin:0;font-size:12.5px;color:#e2e0f0;cursor:pointer}
 .pm-asset-hint{font-size:11px;color:#8a7ab0;margin:8px 0 6px}
 .pm-asset-chips{display:flex;flex-wrap:wrap;gap:6px}
 .pm-asset-chip{padding:7px 10px;border-radius:8px;border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.08);color:#e2e0f0;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer}
@@ -749,8 +751,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       <div><label>ผู้ปฏิบัติงาน</label>
         <select class="pm-select" id="pm-operator">
           <option value="">-- เลือก --</option>
-          <option>อุทัย</option><option>บริษัท NGI</option>
-          <option>Emerald nics</option><option>Techno</option>
+          <option>อุทัย</option><option>Emerald nics</option><option>Techno</option>
         </select>
       </div>
       <div><label>วันที่</label><input class="pm-input" id="pm-date" type="date"></div>
@@ -758,11 +759,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
     <hr class="pm-divider">
     <div class="pm-section"><label>รอบการทำ PM</label>
       <div class="pm-status-row">
-        <button class="pm-st-btn rnd" data-pmround="M"><span class="pm-si">🅼</span>รอบ M<br><span style="font-size:9px;opacity:.7">รายเดือน</span></button>
-        <button class="pm-st-btn rnd" data-pmround="Q"><span class="pm-si">🅀</span>รอบ Q<br><span style="font-size:9px;opacity:.7">ไตรมาส</span></button>
         <button class="pm-st-btn rnd" data-pmround="S"><span class="pm-si">🆂</span>รอบ S<br><span style="font-size:9px;opacity:.7">6 เดือน</span></button>
       </div>
-      <div style="font-size:10.5px;color:#6a7a90;margin-top:6px" id="pm-round-hint">เลือกรอบก่อน — รายการตรวจและช่องกรอกค่าจะเปลี่ยนตามรอบที่เลือก</div>
+      <div style="font-size:10.5px;color:#6a7a90;margin-top:6px" id="pm-round-hint">รอบ S (6 เดือน) — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย</div>
     </div>
     <hr class="pm-divider">
     <div class="pm-section"><label>สถานะการดำเนินงาน</label>
@@ -1464,10 +1463,10 @@ function pmSaveDraft(){
     temp_before:g('pm-temp-before'),temp_after:g('pm-temp-after'),
     operator:g('pm-operator'),date:g('pm-date'),asset:g('pm-asset'),location:g('pm-location'),
     assetHas:(document.getElementById('pm-asset-has-yes')&&document.getElementById('pm-asset-has-yes').checked)?'yes':(document.getElementById('pm-asset-has-no')&&document.getElementById('pm-asset-has-no').checked)?'no':'',
-    beltNo:g('pm-belt-no'),
+    beltNo:g('pm-belt-no'),valve:pmGetValveStatus(),
     ts:Date.now()
   };
-  const isEmpty=!draft.round&&!draft.status&&!draft.note&&!draft.unavailReason&&
+  const isEmpty=!draft.valve&&!draft.status&&!draft.note&&!draft.unavailReason&&
     !draft.air_before&&!draft.air_after&&!draft.amp_before&&!draft.amp_after&&
     !draft.temp_before&&!draft.temp_after&&
     !draft.checklist.some(Boolean)&&!draft.deface.some(Boolean);
@@ -1475,12 +1474,10 @@ function pmSaveDraft(){
   savePmDraftMap();
 }
 function pmApplyDraft(draft){
-  if(draft.round){
-    pmRound=draft.round;
-    document.querySelectorAll('.pm-st-btn.rnd').forEach(b=>b.classList.toggle('sel',b.dataset.pmround===draft.round));
-    document.getElementById('pm-round-hint').textContent=PM_ROUND_LABELS[draft.round]+(draft.round==='M'?' — ไม่ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิ เพื่อความรวดเร็ว':' — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย');
-    pmRenderChecklist();
-    (draft.checklist||[]).forEach((checked,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
+  // draft เก่าก่อนเปลี่ยนเป็น 13 รายการ ลำดับไม่ตรงกัน จึงไม่นำ checklist มาใช้
+  if(draft.round==='S'&&(draft.checklist||[]).length===PM_ROUND_ITEMS.S.length){
+    draft.checklist.forEach((checked,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
+    const valveEl=document.querySelector('input[name="pm-valve"][value="'+(draft.valve||'')+'"]');if(valveEl)valveEl.checked=true;
   }
   if(draft.status){
     pmStatus=draft.status;
@@ -1927,10 +1924,11 @@ function openPMPanel(i){
   const sizeLabel=(sizeNum>=1000)?Number(sizeNum).toLocaleString()+' BTU/hr':'-';
   document.getElementById('pm-model').value=sizeLabel;
   document.querySelectorAll('.pm-st-btn').forEach(b=>b.classList.remove('sel'));
-  pmStatus=null;pmRound=null;
+  pmStatus=null;pmRound='S';
+  document.querySelector('.pm-st-btn.rnd').classList.add('sel');
   ['pm-print-btn','pm-breakdown-btn','pm-doctrack-btn'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display='none';});
   document.getElementById('pm-chk-section').style.display='none';
-  document.getElementById('pm-round-hint').textContent='เลือกรอบก่อน — รายการตรวจและช่องกรอกค่าจะเปลี่ยนตามรอบที่เลือก';
+  document.getElementById('pm-round-hint').textContent=PM_ROUND_LABELS.S+' — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย';
   const measureSecInit=document.getElementById('pm-measure-section');if(measureSecInit)measureSecInit.style.display='block';
   const unavailSecInit=document.getElementById('pm-unavail-section');if(unavailSecInit)unavailSecInit.style.display='none';
   const unavailReasonInit=document.getElementById('pm-unavail-reason');if(unavailReasonInit)unavailReasonInit.value='';
@@ -1974,11 +1972,9 @@ function pmGetModel(){
 
 // ── รายการตรวจตามรอบ PM — M สั้นสุด (ไม่รวมค่าที่วัดได้), Q เพิ่มรายละเอียด, S เพิ่มล้างคอยล์เย็น ──
 const PM_ROUND_ITEMS={
-  M:['ดูดฟิลเตอร์','ดูดท่อน้ำทิ้ง','ทำความสะอาดขั้นพื้นฐาน'],
-  Q:['ดูดและล้างฟิลเตอร์','เช็กค่ามาตรฐานทั่วไป','เติมน้ำยาสลายเมือก','ดูดท่อน้ำทิ้ง','ตรวจเช็กสายพาน'],
-  S:['ดูดและล้างฟิลเตอร์','เช็กค่ามาตรฐานทั่วไป','เติมน้ำยาสลายเมือก','ดูดท่อน้ำทิ้ง','ตรวจเช็กสายพาน','ล้างคอยล์เย็นด้วยน้ำยาล้างคอยล์เย็น']
+  S:['ทำความสะอาดหน้าช่องตะแกรงเป่าลมเย็นและตัวเครื่อง','ตรวจสอบวาล์วเปิด-ปิด น้ำเย็น (Motor Drive)','ตรวจสอบระบบท่อน้ำเย็นและการรั่วไหลของน้ำเย็น','ทำความสะอาดตัวกรองอากาศ ทำความสะอาดท่อน้ำทิ้ง และถาดน้ำทิ้ง','ตรวจเช็คสภาพฉนวนหุ้มท่อ','บันทึกอุณหภูมิอากาศในห้อง','บันทึกอุณหภูมิลมเย็น ก่อนล้าง / หลังล้าง','บันทึกแรงลม ก่อนล้าง / หลังล้าง (CFM)','บันทึกกระแสไฟฟ้าของมอเตอร์ ก่อนล้าง / หลังล้าง','ตรวจสอบชุดขับเคลื่อนวาล์วเปิด-ปิดของท่อน้ำเย็น ท่ออ่อน (ถ้ามี)','ตรวจสอบการทำงานของเทอร์โมสตัท','ตรวจสอบสภาพมอเตอร์และจุดสายไฟฟ้าของมอเตอร์','ล้างทำความสะอาดคอยล์เย็น ไส้กรองและระบายน้ำออกจากตัวเครื่องส่งลมเย็น']
 };
-const PM_ROUND_LABELS={M:'รอบ M (รายเดือน)',Q:'รอบ Q (ไตรมาส)',S:'รอบ S (6 เดือน)'};
+const PM_ROUND_LABELS={S:'รอบ S (6 เดือน)'};
 let pmRound=null;
 
 function pmRenderChecklist(){
@@ -1987,7 +1983,7 @@ function pmRenderChecklist(){
   if(!pmRound){box.innerHTML='<div style="font-size:11.5px;color:#6a7a90">กรุณาเลือกรอบ PM (M/Q/S) ก่อน</div>';return;}
   title.textContent='Checklist การบำรุงรักษา — '+PM_ROUND_LABELS[pmRound];
   const items=PM_ROUND_ITEMS[pmRound];
-  box.innerHTML=items.map((label,idx)=>`<label class="pm-chk-item"><input type="checkbox" id="pm-rc${idx}"><span>${label}</span></label>`).join('');
+  box.innerHTML=items.map((label,idx)=>`<label class="pm-chk-item"><input type="checkbox" id="pm-rc${idx}"><span>${idx+1}. ${label}</span></label>${idx===1?'<div class="pm-valve-row"><span>สถานะ Motor Drive <b style="color:#ff5555">*</b></span><label><input type="radio" name="pm-valve" value="ใช้ได้"> ใช้ได้</label><label><input type="radio" name="pm-valve" value="ไม่ได้"> ไม่ได้</label></div>':''}`).join('');
   const cAll=document.getElementById('pm-c-all');if(cAll)cAll.checked=false;
 }
 
@@ -2082,11 +2078,13 @@ function pmCheckThresholds(){
     if(brBtn)brBtn.classList.remove('warn');
   }
 }
+function pmGetValveStatus(){const el=document.querySelector('input[name="pm-valve"]:checked');return el?el.value:'';}
 function pmGetChecklist(){
   if(!pmRound)return '-';
   const labels=PM_ROUND_ITEMS[pmRound];
   const done=labels.filter((label,idx)=>{const el=document.getElementById('pm-rc'+idx);return el&&el.checked;});
-  return done.length?done.join(', '):'-';
+  const valve=pmGetValveStatus();
+  return (done.length?done.join(', '):'-')+(valve?' | สถานะ Motor Drive: '+valve:'');
 }
 function pmGetDefaceReasons(){
   const labels=['ช่องเซอร์วิสไม่ตรง','ลมแอร์ต่ำกว่าเกณฑ์','Chamber ติดคอยล์เย็น ไม่สะดวกต่อการทำ PM','อุณหภูมิต่ำกว่าเกณฑ์','อื่นๆ (ระบุในหมายเหตุ)'];
@@ -2148,8 +2146,8 @@ async function pmDoSubmit(){
   if(pmStatus==='unavailable'){
     unavailReason=document.getElementById('pm-unavail-reason').value.trim();
     if(!unavailReason){showToast('กรุณาระบุเหตุผลที่ไม่สะดวกเข้าตรวจ','warn');return;}
-  } else if(!pmRound){
-    showToast('กรุณาเลือกรอบ PM (M/Q/S)','warn');return;
+  } else if(pmStatus==='ok'&&!pmGetValveStatus()){
+    showToast('กรุณาเลือกสถานะ Motor Drive (ข้อ 2)','warn');return;
   }
   const btn=document.getElementById('pm-submit-btn');
   btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;
@@ -2220,8 +2218,7 @@ function fnvHash(str){
   return h.toString(16).padStart(16,'0');
 }
 const DEFAULT_USERS={
-  'uthai':      {pw:'admin1234', role:'admin', name:'อุทัย'},
-  'ngi':        {pw:'NGI-zj7var', role:'user', name:'บริษัท NGI'}
+  'uthai':      {pw:'admin1234', role:'admin', name:'อุทัย'}
 };
 const AUTH_KEY='ac_auth_v2',USERS_KEY='ac_users_db';
 let currentUser=null;
@@ -2822,22 +2819,47 @@ initAuth();
 function pmBuildCheckSheetHtml(){
   const idx=pmSelIdx; if(idx===null||idx===undefined)return null;
   const r=RAW[idx]; if(!r)return null;
-  // ใช้รายการตามรอบ PM ที่เลือก — ถ้ายังไม่เลือกรอบ ใช้รอบ S (ครบทุกรายการ) เพื่อพิมพ์เป็นแบบฟอร์มเปล่า
-  const rnd=pmRound||'S';
-  const items=PM_ROUND_ITEMS[rnd].map((text,i)=>{
-    const el=pmRound?document.getElementById('pm-rc'+i):null;
-    return{text,checked:el?el.checked:false};
-  });
-  const rndLbl=pmRound?PM_ROUND_LABELS[pmRound]:'-';
-  const op=document.getElementById('pm-operator')?.value||'';
+  const ev=s=>String(s||'').trim().replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const pv=id=>ev(document.getElementById(id)?.value)||'-';
+  const op=ev(document.getElementById('pm-operator')?.value);
   const dv=document.getElementById('pm-date')?.value||'';
-  const nt=document.getElementById('pm-note')?.value||'';
-  const dd=dv?new Date(dv).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}):new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-  const pv=id=>(document.getElementById(id)?.value||'').trim().replace(/&/g,'&amp;').replace(/</g,'&lt;')||'-';
+  const dd=(dv?new Date(dv):new Date()).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  const nt=ev(document.getElementById('pm-note')?.value);
   const ctr=contractorMap[r[0]]||'';
-  const mrows=[['💨 แรงลม (CFM)','air'],['⚡ กระแสไฟฟ้า (A)','amp'],['🌡 อุณหภูมิ (°C)','temp']].map(([lbl,k])=>`<tr><td style="padding:6px 8px;border:1px solid #ccc;">${lbl}</td><td style="padding:6px 8px;border:1px solid #ccc;text-align:center;">${pv('pm-'+k+'-before')}</td><td style="padding:6px 8px;border:1px solid #ccc;text-align:center;">${pv('pm-'+k+'-after')}</td></tr>`).join('');
-  const rows=items.map((c,i)=>`<tr><td style="padding:7px 8px;border:1px solid #ccc;text-align:center;">${i+1}</td><td style="padding:7px 8px;border:1px solid #ccc;">${c.text}</td><td style="padding:7px 8px;border:1px solid #ccc;text-align:center;">${c.checked?'✅':''}</td><td style="padding:7px 8px;border:1px solid #ccc;text-align:center;">${c.checked?'':'☐'}</td></tr>`).join('');
-  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Check Sheet–${r[0]}</title><style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Sarabun',Arial,sans-serif;font-size:13px;color:#000;padding:14mm 16mm;}h1{text-align:center;font-size:16px;font-weight:700;margin:0 0 4px;}h2{text-align:center;font-size:13px;margin:0 0 14px;color:#333;}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:12px;}.info-row{display:flex;gap:6px;}.info-label{font-weight:700;min-width:110px;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#1F4E79;color:#fff;padding:7px 8px;border:1px solid #1F4E79;text-align:center;}.sig-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px;}.sig-box{text-align:center;border-top:1.5px solid #333;padding-top:6px;font-size:12px;}.sig-name{font-weight:700;margin-bottom:20px;color:#1F4E79;}.print-btn{position:fixed;bottom:18px;right:18px;background:#1F4E79;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-family:'Sarabun',Arial;font-size:14px;}@media print{.print-btn{display:none!important;}@page{size:A4 portrait;margin:10mm;}}</style></head><body>${ctr?`<div style="text-align:center;font-size:18px;font-weight:700;color:#1F4E79;margin:0 0 4px;">${ctr}</div>`:''}<h1>Check Sheet การบำรุงรักษาเชิงป้องกัน</h1><h2>AHU / FCU — ตึกภูมิสิริมังคลานุสรณ์  โรงพยาบาลจุฬาลงกรณ์</h2><hr style="border:1.5px solid #333;margin:0 0 12px;"><div class="info-grid"><div class="info-row"><span class="info-label">หมายเลขเครื่อง :</span><span>${r[0]}</span></div><div class="info-row"><span class="info-label">วันที่ :</span><span>${dd}</span></div><div class="info-row"><span class="info-label">ประเภท :</span><span>${r[3]||'-'}</span></div><div class="info-row"><span class="info-label">ผู้ปฏิบัติงาน :</span><span>${op}</span></div><div class="info-row"><span class="info-label">ชั้น/โซน :</span><span>ชั้น ${r[6]}/โซน ${r[5]||'-'}</span></div><div class="info-row"><span class="info-label">ขนาด :</span><span>${r[8]||'-'}</span></div><div class="info-row"><span class="info-label">สถานที่ :</span><span>${r[4]||'-'}</span></div><div class="info-row"><span class="info-label">รหัสครุภัณฑ์ :</span><span>${pv('pm-asset')}</span></div><div class="info-row"><span class="info-label">รอบ PM :</span><span>${rndLbl}</span></div><div class="info-row"><span class="info-label">เบอร์สายพาน :</span><span>${pv('pm-belt-no')}</span></div><div class="info-row"><span class="info-label">ขนาดฟิลเตอร์ :</span><span>${pv('pm-filter-size')}</span></div></div><hr style="border:1.5px solid #333;margin:0 0 10px;"><table><thead><tr><th style="width:46%">ค่าที่วัดได้</th><th style="width:27%">ก่อนล้าง</th><th style="width:27%">หลังล้าง</th></tr></thead><tbody>${mrows}</tbody></table><table><thead><tr><th style="width:8%">ลำดับ</th><th style="width:56%">รายการตรวจสอบ</th><th style="width:18%">เสร็จ</th><th style="width:18%">ไม่ได้</th></tr></thead><tbody>${rows}</tbody></table><div style="font-size:13px;margin-bottom:10px;"><span style="font-weight:700;">หมายเหตุ :</span> ${(nt||'-').replace(/</g,'&lt;')}</div><hr style="border:1.5px solid #333;margin:0 0 10px;"><div class="sig-row"><div class="sig-box"><div class="sig-name">ผู้ปฏิบัติ</div><div>( ${op||'…………………………'} )</div><div style="font-size:11px;margin-top:3px;">หัวหน้าช่าง STB</div></div><div class="sig-box"><div class="sig-name">ผู้ตรวจสอบ</div><div>( ………………………… )</div><div style="font-size:11px;margin-top:3px;">วิศวกร STB</div></div><div class="sig-box"><div class="sig-name">ผู้ตรวจทาน</div><div>( ………………………… )</div><div style="font-size:11px;margin-top:3px;">วิศวกร PCSM</div></div></div><button class="print-btn" onclick="window.print()">🖨️ พิมพ์</button></body></html>`;
+  const isFcu=r[3]==='FCU';
+  const unit=isFcu?'Fan Coil Unit':'Air Handling Unit';
+  const docNo=isFcu?'BMSR-FM-MF-FCU-001.A':'-';
+  const id=String(r[0]);
+  const btu=parseFloat(String(r[8]).replace(/,/g,''))||0;
+  const room=[r[7],document.getElementById('pm-location')?.value].map(ev).filter(Boolean).join(' / ')||'-';
+  const box=on=>`<span class="cb">${on?'✓':''}</span>`;
+  const ba=k=>{const b=pv('pm-'+k+'-before'),a=pv('pm-'+k+'-after');return b==='-'&&a==='-'?'':`ก่อน ${b} / หลัง ${a}`;};
+  const mark=i=>{const el=document.getElementById('pm-rc'+i);return el&&el.checked?'✓':'-';};
+  const valve=pmGetValveStatus();
+  const check={1:valve?(valve==='ใช้ได้'?'✓ ใช้ได้':'X ไม่ได้'):mark(1),6:ba('temp')||mark(6),7:ba('air')||mark(7),8:ba('amp')||mark(8)};
+  const std={5:'°C',6:'°C',7:'CFM',8:'A'};
+  const rows=PM_ROUND_ITEMS.S.map((t,i)=>`<tr><td class="c">${i+1}</td><td>${t}</td><td class="c">${i<4?'M':i<9?'Q':'S'}</td><td class="c">${std[i]||''}</td><td class="c v">${check[i]||mark(i)}</td></tr>`).join('');
+  const blank='<tr><td class="ln">&nbsp;</td></tr>';
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Check Sheet–${id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Sarabun',Arial,sans-serif;font-size:12px;color:#000;padding:9mm 13mm;}table{width:100%;border-collapse:collapse;}.top{text-align:right;margin-bottom:4px;}.ctr{font-size:17px;font-weight:700;color:#1F4E79;}.ttl{font-size:15px;font-weight:700;}.ttl span{font-weight:400;color:#555;}.frame{border:1.5px solid #000;}.info{padding:6px 8px;}.line{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px;flex-wrap:nowrap;}.line:last-child{margin-bottom:0;}.f{white-space:nowrap;}.f b{font-weight:600;}.u{border-bottom:1px solid #777;padding:0 6px;font-weight:600;color:#123a66;}.cb{display:inline-block;width:13px;height:13px;border:1px solid #000;text-align:center;line-height:11px;font-size:12px;margin-right:4px;vertical-align:-2px;}.hint{font-size:10.5px;}.list th{background:#eee;font-weight:600;border:1px solid #000;padding:3px 5px;}.list td{border:1px solid #000;padding:3.5px 6px;font-size:11.5px;}.c{text-align:center;}.v{font-weight:600;color:#123a66;white-space:nowrap;}.rm td{border:1px solid #000;border-top:none;padding:3px 6px;}.ln{height:21px;}.sig{margin-top:-1px;}.sig td,.sig th{border:1px solid #000;padding:3px 6px;font-size:11.5px;text-align:left;height:21px;}.sig th{text-align:center;font-weight:600;background:#eee;}.mut{color:#555;}.foot{margin-top:8px;}.foot td{border:1px solid #000;padding:3px 7px;font-size:11px;}.print-btn{position:fixed;bottom:18px;right:18px;background:#1F4E79;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-family:'Sarabun',Arial;font-size:14px;}@media print{.print-btn{display:none!important;}@page{size:A4 portrait;margin:6mm;}}</style></head><body>
+<div class="top">${ctr?`<div class="ctr">${ev(ctr)}</div>`:''}<div class="ttl">ใบรายการบำรุงรักษา : เครื่องส่งลมเย็น <span>/ ${unit}</span></div></div>
+<div class="frame"><div class="info">
+<div class="line"><span class="f"><b>อาคารภูมิสิริมังคลานุสรณ์ โรงพยาบาลจุฬาลงกรณ์ สภากาชาดไทย</b></span><span class="f"><b>วัน-เดือน-ปี</b> <span class="u">${dd}</span></span></div>
+<div class="line"><span class="f">${box(id[0]==='1')}อาคารรักษาพยาบาลรวม (PC)</span><span class="f">${box(id[0]==='2')}อาคารศูนย์ความเป็นเลิศ (EC)</span><span class="f"><b>ชั้นที่</b> <span class="u">${ev(r[6])||'-'}</span></span><span class="f"><b>โซน</b> <span class="u">${ev(r[5])||'-'}</span></span></div>
+<div class="line"><span class="f"><b>แผนก/ห้อง</b> <span class="u">${room}</span></span></div>
+<div class="line"><span class="f"><b>หมายเลขเครื่อง :</b> <span class="u">${ev(id)}</span></span><span class="f"><b>เลขครุภัณฑ์ :</b> <span class="u">${pv('pm-asset')}</span></span><span class="f"><b>ขนาด/กำลัง</b> <span class="u">${btu?btu.toLocaleString():'-'}</span> BTU/TON</span></div>
+<div class="line"><span class="f"><b>ขนาดฟิลเตอร์ :</b> <span class="u">${pv('pm-filter-size')}</span></span><span class="f"><b>เบอร์สายพาน :</b> <span class="u">${pv('pm-belt-no')}</span></span><span class="f"><b>ประเภทของงาน/รอบ :</b> ${box(true)}S : ทุก 6 เดือน</span></div>
+<div class="hint">ทำเครื่องหมาย ✓ ถ้าปกติ หรือทำเครื่องหมาย X ถ้าพบปัญหาหรือความผิดปกติพร้อมบันทึกลงในใบรายงาน หรือ - เมื่อไม่ตรวจสอบ</div>
+</div><table class="list"><thead><tr><th style="width:6%">ลำดับ</th><th style="width:57%">รายการตรวจสอบ-บำรุงรักษา</th><th style="width:6%">รอบ</th><th style="width:10%">ค่ามาตรฐาน</th><th style="width:21%">ค่าที่ตรวจสอบ</th></tr></thead><tbody>${rows}</tbody></table>
+<table class="rm"><tr><td><b>หมายเหตุ :</b> ${nt||'&nbsp;'}</td></tr>${blank}${blank}</table>
+<table class="sig"><tr><th style="width:34%">ผู้ปฏิบัติงาน</th><th style="width:36%">ผู้ควบคุมงาน</th><th style="width:30%">ผู้ใช้งาน / FMU</th></tr>
+<tr><td class="mut">บำรุงรักษาโดย - ช่างเทคนิค</td><td><b>ตรวจสอบโดย - วิศวกรอาวุโส</b></td><td class="mut">เจ้าหน้าที่ - ผู้รับบริการ</td></tr>
+<tr><td>ลงชื่อ : ${op}</td><td>ลงชื่อ :</td><td>ลงชื่อ :</td></tr>
+<tr><td>ลงที่ :</td><td>ลงที่ :</td><td></td></tr>
+<tr><td>วันที่ : ${dd}</td><td>วันที่ :</td><td>วันที่ :</td></tr>
+<tr><td><b>ตรวจสอบ - หัวหน้าช่างเทคนิค</b></td><td colspan="2" rowspan="3" style="vertical-align:top"><b>ความเห็นเพิ่มเติมอื่นๆ</b></td></tr>
+<tr><td>ลงชื่อ :</td></tr><tr><td>วันที่ :</td></tr></table></div>
+<table class="foot"><tr><td style="width:40%">อาคารภูมิสิริมังคลานุสรณ์ ร.พ.จุฬาลงกรณ์</td><td style="width:30%" class="c">หมายเลขเอกสาร</td><td style="width:20%" class="c">วันที่ประกาศใช้</td><td style="width:10%" class="c">หน้าที่</td></tr><tr><td>รายการบำรุงรักษา : เครื่องส่งลมเย็น</td><td class="c">${docNo}</td><td class="c">15 พ.ย. 2563</td><td class="c">1/1</td></tr></table>
+<button class="print-btn" onclick="window.print()">🖨️ พิมพ์</button></body></html>`;
   return html;
 }
 function pmPrintCheckSheet(){
