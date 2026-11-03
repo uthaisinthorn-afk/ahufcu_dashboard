@@ -631,7 +631,6 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
   <div class="stat"><div class="n" id="s-deface" style="color:#ff8800">0</div><div class="l">🟠 Deface</div></div>
   <div class="stat"><div class="n" id="s-unavail" style="color:#a855f7">0</div><div class="l">🚫 ไม่สะดวก</div></div>
 </div>
-<div class="global-model-summary" id="globalModelSummary"></div>
 <div style="display:flex;align-items:center;padding:6px 20px">
   <div class="sync-bar"><div class="sync-dot"></div><span>พร้อมใช้งาน</span><span id="orderSyncDebug" style="margin-left:14px;color:#ffd54a;font-family:'IBM Plex Mono',monospace;font-size:11px"></span></div>
 </div>
@@ -1068,14 +1067,6 @@ function typeSizeBadgesHTML(counts){
   const keys=Object.keys(counts).sort(typeSizeSort);
   if(!keys.length)return '';
   return '<div class="floor-model-summary">'+keys.map(k=>'<span class="fms-item t-'+escHtml(k.split(' ')[0])+'">'+escHtml(k)+' <b>'+counts[k]+'</b> ตัว</span>').join('')+'</div>';
-}
-function renderGlobalModelSummary(){
-  const el=document.getElementById('globalModelSummary');if(!el)return;
-  const byType={},bySize={};
-  RAW.forEach(r=>{const t=r[3]||'-';byType[t]=(byType[t]||0)+1;const k=typeSizeKey(r);bySize[k]=(bySize[k]||0)+1;});
-  const typeBadges=Object.keys(byType).sort().map(t=>'<span class="fms-item t-'+escHtml(t)+'">'+escHtml(t)+' <b>'+byType[t]+'</b> ตัว</span>').join('');
-  el.innerHTML='<div class="gms-title">📊 สรุปจำนวนเครื่องแยกตามประเภท/ขนาด (รวมทุกชั้น) — ทั้งหมด <span class="gms-total">'+RAW.length+'</span> ตัว <span class="floor-model-summary" style="margin:0">'+typeBadges+'</span></div>'
-    +'<div class="gms-sub">แยกตามขนาด (BTU/hr)</div>'+typeSizeBadgesHTML(bySize);
 }
 
 // ── รายการเครื่องชำรุด ──
@@ -1566,7 +1557,6 @@ function render(){
     if(filter.floor&&filter.floor!==fl)return;
     const zonesInFloor=Object.keys(byFloorZone[fl]).sort();
     const floorParts=[];let floorCount=0;
-    const floorTypeCounts={};
     zonesInFloor.forEach(zn=>{
       if(filter.zone&&filter.zone!==zn)return;
       const filtered=byFloorZone[fl][zn].filter(i=>{
@@ -1595,7 +1585,6 @@ function render(){
         const twCls=(threshWarn[i]||defaceFlag[i])?' thresh-warn':'';
         return '<button class="fkey '+st+twCls+'" data-i="'+i+'" data-mid="'+RAW[i][0]+'">'+badge+kid+dot+'</button>';
       }).join('');
-      filtered.forEach(i=>{const k=typeSizeKey(RAW[i]);floorTypeCounts[k]=(floorTypeCounts[k]||0)+1;});
       const zg='<div class="zone-grp"><div class="zone-lbl">Zone '+zn+'</div><div class="key-grid">'+keyHtml+'</div></div>';
       floorParts.push(zg);
     });
@@ -1609,7 +1598,6 @@ function render(){
       +'<button class="floor-map-btn" data-fl-map="'+fl+'">🗺 แผนที่</button>'
       +'<div class="floor-tog" id="ft-'+fl+'">▾</div>'
       +'</div>'
-      +typeSizeBadgesHTML(floorTypeCounts)
       +'<div id="fb-'+fl+'">'+floorParts.join('')+'</div>'
       +'</div>';
     parts.push(fp);
@@ -1646,7 +1634,6 @@ function updateStats(){
   const df_el=document.getElementById('s-deface');if(df_el)df_el.textContent=df;
   const ua_el=document.getElementById('s-unavail');if(ua_el)ua_el.textContent=ua;
   const ord_el=document.getElementById('s-ord');if(ord_el)ord_el.textContent=orderingSet.size;
-  renderGlobalModelSummary();
 }
 
 function openModal(i){
