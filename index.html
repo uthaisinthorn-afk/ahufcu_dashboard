@@ -811,7 +811,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
     <div class="pm-section"><label>หมายเหตุ</label><textarea class="pm-note" id="pm-note" placeholder="บันทึกเพิ่มเติม (ถ้ามี)"></textarea></div>
-    <div class="pm-section"><label>รูปถ่าย (ถ้ามี)</label>
+    <div class="pm-section"><label>รูปถ่าย (ถ้ามี) — สูงสุด 6 รูป</label>
       <div class="pm-photo-cards">
         <div class="pm-photo-card" id="slot-0">
           <div class="pm-photo-card-head"><span>🔧</span><span class="card-title">รหัสเครื่อง / หน้าเครื่อง</span><button class="card-del" data-slot="0">🗑</button></div>
@@ -851,6 +851,45 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
           </div>
           <input type="file" id="pm-cam-2" accept="image/*" capture="environment" style="display:none">
           <input type="file" id="pm-gal-2" accept="image/*" style="display:none">
+        </div>
+        <div class="pm-photo-card" id="slot-3">
+          <div class="pm-photo-card-head"><span>🧽</span><span class="card-title">ก่อนทำ PM (ฟิลเตอร์ / คอยล์ก่อนล้าง)</span><button class="card-del" data-slot="3">🗑</button></div>
+          <div class="pm-photo-card-body">
+            <div class="pm-photo-placeholder">🧽</div>
+            <img class="pm-photo-thumb" id="preview-3" src="" alt="">
+            <div class="pm-photo-btns">
+              <button class="pm-photo-btn" data-action="cam" data-idx="3"><span class="btn-ico">📷</span><span>กล้อง</span></button>
+              <button class="pm-photo-btn" data-action="gal" data-idx="3"><span class="btn-ico">🖼</span><span>อัปโหลด</span></button>
+            </div>
+          </div>
+          <input type="file" id="pm-cam-3" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="pm-gal-3" accept="image/*" style="display:none">
+        </div>
+        <div class="pm-photo-card" id="slot-4">
+          <div class="pm-photo-card-head"><span>✨</span><span class="card-title">หลังทำ PM (ฟิลเตอร์ / คอยล์หลังล้าง)</span><button class="card-del" data-slot="4">🗑</button></div>
+          <div class="pm-photo-card-body">
+            <div class="pm-photo-placeholder">✨</div>
+            <img class="pm-photo-thumb" id="preview-4" src="" alt="">
+            <div class="pm-photo-btns">
+              <button class="pm-photo-btn" data-action="cam" data-idx="4"><span class="btn-ico">📷</span><span>กล้อง</span></button>
+              <button class="pm-photo-btn" data-action="gal" data-idx="4"><span class="btn-ico">🖼</span><span>อัปโหลด</span></button>
+            </div>
+          </div>
+          <input type="file" id="pm-cam-4" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="pm-gal-4" accept="image/*" style="display:none">
+        </div>
+        <div class="pm-photo-card" id="slot-5">
+          <div class="pm-photo-card-head"><span>📎</span><span class="card-title">รูปเพิ่มเติม</span><button class="card-del" data-slot="5">🗑</button></div>
+          <div class="pm-photo-card-body">
+            <div class="pm-photo-placeholder">📎</div>
+            <img class="pm-photo-thumb" id="preview-5" src="" alt="">
+            <div class="pm-photo-btns">
+              <button class="pm-photo-btn" data-action="cam" data-idx="5"><span class="btn-ico">📷</span><span>กล้อง</span></button>
+              <button class="pm-photo-btn" data-action="gal" data-idx="5"><span class="btn-ico">🖼</span><span>อัปโหลด</span></button>
+            </div>
+          </div>
+          <input type="file" id="pm-cam-5" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="pm-gal-5" accept="image/*" style="display:none">
         </div>
       </div>
       <div class="pm-photo-status" id="pm-photo-status"></div>
@@ -1443,7 +1482,7 @@ function pmSaveDraft(){
   if(pmSelIdx===null||pmSelIdx===undefined)return;
   const r=RAW[pmSelIdx];if(!r)return;
   const mid=r[0];if(!mid)return;
-  const checklist=pmRound?PM_ROUND_ITEMS[pmRound].map((_,idx)=>{const el=document.getElementById('pm-rc'+idx);return !!(el&&el.checked);}):[];
+  const checklist=pmRound?pmItems().items.map((_,idx)=>{const el=document.getElementById('pm-rc'+idx);return !!(el&&el.checked);}):[];
   const deface=[1,2,3,4,5].map(n=>{const el=document.getElementById('pm-df'+n);return !!(el&&el.checked);});
   const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
   const draft={
@@ -1466,7 +1505,7 @@ function pmSaveDraft(){
 }
 function pmApplyDraft(draft){
   // draft เก่าก่อนเปลี่ยนเป็น 13 รายการ ลำดับไม่ตรงกัน จึงไม่นำ checklist มาใช้
-  if(draft.round==='S'&&(draft.checklist||[]).length===PM_ROUND_ITEMS.S.length){
+  if(draft.round==='S'&&(draft.checklist||[]).length===pmItems().items.length){
     draft.checklist.forEach((checked,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
     const valveEl=document.querySelector('input[name="pm-valve"][value="'+(draft.valve||'')+'"]');if(valveEl)valveEl.checked=true;
   }
@@ -1509,7 +1548,7 @@ function pmClearDraft(machineId){
 let filter={floor:'',zone:'',type:'',status:'all',search:''};
 let selIdx=null,selModalStatus=null,pmMode=false,pmActive=false,pmFloor='',pmZone='';
 let pmStatus=null,pmSelIdx=null;
-const pmPhotos=[null,null,null];
+const pmPhotos=[null,null,null,null,null,null];
 
 function getStatus(i){if(overrides[i]!==undefined)return overrides[i];const v=RAW[i][2];return v===1?'ok':v===2?'broken':v===4?'reschedule':'unknown';}
 function isInPM(i){return pmSet.has(i);}
@@ -1930,8 +1969,8 @@ function openPMPanel(i){
   });
   document.querySelector('.pm-st-btn.br').classList.remove('warn');
   document.getElementById('pm-warn-box').style.display='none';
-  pmPhotos[0]=null;pmPhotos[1]=null;pmPhotos[2]=null;
-  [0,1,2].forEach(idx=>{
+  pmPhotos.fill(null);
+  pmPhotos.forEach((_,idx)=>{
     const pv=document.getElementById('preview-'+idx);if(pv)pv.src='';
     const sl=document.getElementById('slot-'+idx);if(sl)sl.classList.remove('has-img');
     ['pm-cam-','pm-gal-'].forEach(p=>{const fi=document.getElementById(p+idx);if(fi)fi.value='';});
@@ -1958,9 +1997,14 @@ function pmGetModel(){
 }
 
 // ── รายการตรวจตามรอบ PM — M สั้นสุด (ไม่รวมค่าที่วัดได้), Q เพิ่มรายละเอียด, S เพิ่มล้างคอยล์เย็น ──
-const PM_ROUND_ITEMS={
-  S:['ทำความสะอาดหน้าช่องตะแกรงเป่าลมเย็นและตัวเครื่อง','ตรวจสอบวาล์วเปิด-ปิด น้ำเย็น (Motor Drive)','ตรวจสอบระบบท่อน้ำเย็นและการรั่วไหลของน้ำเย็น','ทำความสะอาดตัวกรองอากาศ ทำความสะอาดท่อน้ำทิ้ง และถาดน้ำทิ้ง','ตรวจเช็คสภาพฉนวนหุ้มท่อ','บันทึกอุณหภูมิอากาศในห้อง','บันทึกอุณหภูมิลมเย็น ก่อนล้าง / หลังล้าง','บันทึกแรงลม ก่อนล้าง / หลังล้าง (CFM)','บันทึกกระแสไฟฟ้าของมอเตอร์ ก่อนล้าง / หลังล้าง','ตรวจสอบชุดขับเคลื่อนวาล์วเปิด-ปิดของท่อน้ำเย็น ท่ออ่อน (ถ้ามี)','ตรวจสอบการทำงานของเทอร์โมสตัท','ตรวจสอบสภาพมอเตอร์และจุดสายไฟฟ้าของมอเตอร์','ล้างทำความสะอาดคอยล์เย็น ไส้กรองและระบายน้ำออกจากตัวเครื่องส่งลมเย็น']
+// รายการ Check Sheet แยกตามประเภทเครื่อง · rounds = รอบของแต่ละข้อ · meas = ข้อที่ใช้ค่าก่อน/หลังล้างจากฟอร์ม (index เริ่ม 0)
+const PM_CHECK={
+  FCU:{rounds:'MMMMQQQQQSSSS',items:['ทำความสะอาดหน้าช่องตะแกรงเป่าลมเย็นและตัวเครื่อง','ตรวจสอบวาล์วเปิด-ปิด น้ำเย็น (Motor Drive)','ตรวจสอบระบบท่อน้ำเย็นและการรั่วไหลของน้ำเย็น','ทำความสะอาดตัวกรองอากาศ ทำความสะอาดท่อน้ำทิ้ง และถาดน้ำทิ้ง','ตรวจเช็คสภาพฉนวนหุ้มท่อ','บันทึกอุณหภูมิอากาศในห้อง','บันทึกอุณหภูมิลมเย็น ก่อนล้าง / หลังล้าง','บันทึกแรงลม ก่อนล้าง / หลังล้าง (CFM)','บันทึกกระแสไฟฟ้าของมอเตอร์ ก่อนล้าง / หลังล้าง','ตรวจสอบชุดขับเคลื่อนวาล์วเปิด-ปิดของท่อน้ำเย็น ท่ออ่อน (ถ้ามี)','ตรวจสอบการทำงานของเทอร์โมสตัท','ตรวจสอบสภาพมอเตอร์และจุดสายไฟฟ้าของมอเตอร์','ล้างทำความสะอาดคอยล์เย็น ไส้กรองและระบายน้ำออกจากตัวเครื่องส่งลมเย็น'],
+       meas:{temp:6,air:7,amp:8},std:{5:'°C',6:'°C',7:'CFM',8:'A'},docNo:'BMSR-FM-MF-FCU-001.A'},
+  AHU:{rounds:'MMMMMMMMMMMMQQQQQQQSSSSS',items:['ทำความสะอาดทั่วไป','ตรวจสอบวาล์วเปิด-ปิด น้ำเย็น (Motor Drive)','ตรวจสอบมอเตอร์และลูกปืน','ตรวจสอบทำงานของโซลินอยด์วาล์ว / มอเตอร์ขับวาล์วและการทำงานของวาล์วทั้งหมด','ตรวจสอบระบบท่อน้ำเย็นและการรั่วไหลของน้ำเย็น','ทำความสะอาดตัวกรองอากาศ ทำความสะอาดท่อน้ำทิ้งและถาดน้ำทิ้ง','ตรวจสอบการทำงานในสภาวะต่างๆ ในระบบอาคารอัตโนมัติ','ตรวจสอบการสื่อสารระหว่างอุปกรณ์ต่อพ่วงกับระบบอาคารอัตโนมัติและทำความสะอาด','ตรวจสอบหลอดไฟแสดงสถานะการทำงานตู้ควบคุม','ตรวจสอบมานอมิเตอร์ของแผ่นกรองอากาศ Pre-Filter','ตรวจสอบมานอมิเตอร์ของแผ่นกรองอากาศ Medium-Filter','ตรวจสอบมานอมิเตอร์ของแผ่นกรองอากาศ HEPA-Filter','บันทึกอุณหภูมิลมเย็น ก่อนล้าง / หลังล้าง','บันทึกอุณหภูมิน้ำเย็นด้านเข้า / ด้านออก','บันทึกแรงดันน้ำด้านเข้า / ด้านออก','บันทึกกระแสไฟฟ้าของมอเตอร์ ก่อนล้าง / หลังล้าง','ตรวจสอบชุดขับเคลื่อนวาล์วเปิด-ปิดของท่อน้ำเย็น ท่ออ่อน (ถ้าจำเป็น)','ล้างทำความสะอาดคอยล์เย็น ไส้กรองและระบายน้ำออกจากตัวเครื่องส่งลมเย็น','บันทึกแรงลม ก่อนล้าง / หลังล้าง (CFM)','ตรวจสอบการทำงานของเทอร์โมสตัท','ตรวจสอบสภาพมอเตอร์และสภาพของกล่องต่อสายไฟฟ้าของมอเตอร์','ตรวจสอบความเร็วรอบของมอเตอร์','ตรวจเช็คความตึงสายพาน ทำการปรับถ้าหย่อน หรือเปลี่ยนถ้าหมดอายุ','ตรวจสอบตู้ควบคุมการทำงานและขันกวดจุดต่อสายไฟฟ้าภายในตู้ (ถ้าหลวม)'],
+       meas:{temp:12,amp:15,air:18},std:{12:'°C',13:'°C',15:'A',18:'CFM'},docNo:'-'}
 };
+function pmItems(){const r=RAW[pmSelIdx];return PM_CHECK[r&&r[3]==='AHU'?'AHU':'FCU'];}
 const PM_ROUND_LABELS={S:'รอบ S (6 เดือน)'};
 let pmRound=null;
 
@@ -1969,7 +2013,7 @@ function pmRenderChecklist(){
   const title=document.getElementById('pm-chk-title');
   if(!pmRound){box.innerHTML='<div style="font-size:11.5px;color:#6a7a90">กรุณาเลือกรอบ PM (M/Q/S) ก่อน</div>';return;}
   title.textContent='Checklist การบำรุงรักษา — '+PM_ROUND_LABELS[pmRound];
-  const items=PM_ROUND_ITEMS[pmRound];
+  const items=pmItems().items;
   box.innerHTML=items.map((label,idx)=>`<label class="pm-chk-item"><input type="checkbox" id="pm-rc${idx}"><span>${idx+1}. ${label}</span></label>${idx===1?'<div class="pm-valve-row"><span>สถานะ Motor Drive <b style="color:#ff5555">*</b></span><label><input type="radio" name="pm-valve" value="ใช้ได้"> ใช้ได้</label><label><input type="radio" name="pm-valve" value="ไม่ได้"> ไม่ได้</label></div>':''}`).join('');
   const cAll=document.getElementById('pm-c-all');if(cAll)cAll.checked=false;
 }
@@ -2068,7 +2112,7 @@ function pmCheckThresholds(){
 function pmGetValveStatus(){const el=document.querySelector('input[name="pm-valve"]:checked');return el?el.value:'';}
 function pmGetChecklist(){
   if(!pmRound)return '-';
-  const labels=PM_ROUND_ITEMS[pmRound];
+  const labels=pmItems().items;
   const done=labels.filter((label,idx)=>{const el=document.getElementById('pm-rc'+idx);return el&&el.checked;});
   const valve=pmGetValveStatus();
   return (done.length?done.join(', '):'-')+(valve?' | สถานะ Motor Drive: '+valve:'');
@@ -2080,7 +2124,7 @@ function pmGetDefaceReasons(){
 }
 function pmToggleAllChecklist(checked){
   if(!pmRound)return;
-  PM_ROUND_ITEMS[pmRound].forEach((label,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
+  pmItems().items.forEach((label,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
 }
 
 const PHOTO_MAX_W=800,PHOTO_QUALITY=0.72;
@@ -2186,7 +2230,8 @@ async function pmDoSubmit(){
     air_before:pmRound==='M'?'':document.getElementById('pm-air-before').value,air_after:pmRound==='M'?'':document.getElementById('pm-air-after').value,
     amp_before:pmRound==='M'?'':document.getElementById('pm-amp-before').value,amp_after:pmRound==='M'?'':document.getElementById('pm-amp-after').value,
     temp_before:pmRound==='M'?'':document.getElementById('pm-temp-before').value,temp_after:pmRound==='M'?'':document.getElementById('pm-temp-after').value,
-    photo_machine:pmPhotos[0]||'',photo_asset:pmPhotos[1]||'',photo_location:pmPhotos[2]||''
+    photo_machine:pmPhotos[0]||'',photo_asset:pmPhotos[1]||'',photo_location:pmPhotos[2]||'',
+    photo_before:pmPhotos[3]||'',photo_after:pmPhotos[4]||'',photo_extra:pmPhotos[5]||''
   };
   try{await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
   catch(e){console.warn('GS sync failed:',e.message);}
@@ -2379,7 +2424,7 @@ function initApp(){
       document.getElementById('pm-'+(action==='cam'?'cam':'gal')+'-'+idx).click();
     });
   });
-  [0,1,2].forEach(idx=>{
+  pmPhotos.forEach((_,idx)=>{
     document.getElementById('pm-cam-'+idx).addEventListener('change',function(){pmPhotoSelected(idx,this);});
     document.getElementById('pm-gal-'+idx).addEventListener('change',function(){pmPhotoSelected(idx,this);});
   });
@@ -2817,7 +2862,7 @@ function pmBuildCheckSheetHtml(){
   const ctr=contractorMap[r[0]]||'';
   const isFcu=r[3]==='FCU';
   const unit=isFcu?'Fan Coil Unit':'Air Handling Unit';
-  const docNo=isFcu?'BMSR-FM-MF-FCU-001.A':'-';
+  const docNo=pmItems().docNo;
   const id=String(r[0]);
   const btu=parseFloat(String(r[8]).replace(/,/g,''))||0;
   const room=[r[7],document.getElementById('pm-location')?.value].map(ev).filter(Boolean).join(' / ')||'-';
@@ -2825,11 +2870,12 @@ function pmBuildCheckSheetHtml(){
   const ba=k=>{const b=pv('pm-'+k+'-before'),a=pv('pm-'+k+'-after');return b==='-'&&a==='-'?'':`ก่อน ${b} / หลัง ${a}`;};
   const mark=i=>{const el=document.getElementById('pm-rc'+i);return el&&el.checked?'✓':'-';};
   const valve=pmGetValveStatus();
-  const check={1:valve?(valve==='ใช้ได้'?'✓ ใช้ได้':'X ไม่ได้'):mark(1),6:ba('temp')||mark(6),7:ba('air')||mark(7),8:ba('amp')||mark(8)};
-  const std={5:'°C',6:'°C',7:'CFM',8:'A'};
-  const rows=PM_ROUND_ITEMS.S.map((t,i)=>`<tr><td class="c">${i+1}</td><td>${t}</td><td class="c">${i<4?'M':i<9?'Q':'S'}</td><td class="c">${std[i]||''}</td><td class="c v">${check[i]||mark(i)}</td></tr>`).join('');
+  const ck=pmItems(),std=ck.std;
+  const check={1:valve?(valve==='ใช้ได้'?'✓ ใช้ได้':'X ไม่ได้'):mark(1)};
+  Object.entries(ck.meas).forEach(([k,i])=>{check[i]=ba(k)||mark(i);});
+  const rows=ck.items.map((t,i)=>`<tr><td class="c">${i+1}</td><td>${t}</td><td class="c">${ck.rounds[i]}</td><td class="c">${std[i]||''}</td><td class="c v">${check[i]||mark(i)}</td></tr>`).join('');
   const blank='<tr><td class="ln">&nbsp;</td></tr>';
-  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Check Sheet–${id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Sarabun',Arial,sans-serif;font-size:12px;color:#000;padding:9mm 13mm;}table{width:100%;border-collapse:collapse;}.top{text-align:right;margin-bottom:4px;}.ctr{font-size:17px;font-weight:700;color:#1F4E79;}.ttl{font-size:15px;font-weight:700;}.ttl span{font-weight:400;color:#555;}.frame{border:1.5px solid #000;}.info{padding:6px 8px;}.line{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px;flex-wrap:nowrap;}.line:last-child{margin-bottom:0;}.f{white-space:nowrap;}.f b{font-weight:600;}.u{border-bottom:1px solid #777;padding:0 6px;font-weight:600;color:#123a66;}.cb{display:inline-block;width:13px;height:13px;border:1px solid #000;text-align:center;line-height:11px;font-size:12px;margin-right:4px;vertical-align:-2px;}.hint{font-size:10.5px;}.list th{background:#eee;font-weight:600;border:1px solid #000;padding:3px 5px;}.list td{border:1px solid #000;padding:3.5px 6px;font-size:11.5px;}.c{text-align:center;}.v{font-weight:600;color:#123a66;white-space:nowrap;}.rm td{border:1px solid #000;border-top:none;padding:3px 6px;}.ln{height:21px;}.sig{margin-top:-1px;}.sig td,.sig th{border:1px solid #000;padding:3px 6px;font-size:11.5px;text-align:left;height:21px;}.sig th{text-align:center;font-weight:600;background:#eee;}.mut{color:#555;}.foot{margin-top:8px;}.foot td{border:1px solid #000;padding:3px 7px;font-size:11px;}.print-btn{position:fixed;bottom:18px;right:18px;background:#1F4E79;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-family:'Sarabun',Arial;font-size:14px;}@media print{.print-btn{display:none!important;}@page{size:A4 portrait;margin:6mm;}}</style></head><body>
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Check Sheet–${id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Sarabun',Arial,sans-serif;font-size:12px;color:#000;padding:9mm 13mm;}table{width:100%;border-collapse:collapse;}.top{text-align:right;margin-bottom:4px;}.ctr{font-size:17px;font-weight:700;color:#1F4E79;}.ttl{font-size:15px;font-weight:700;}.ttl span{font-weight:400;color:#555;}.frame{border:1.5px solid #000;}.info{padding:6px 8px;}.line{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px;flex-wrap:nowrap;}.line:last-child{margin-bottom:0;}.f{white-space:nowrap;}.f b{font-weight:600;}.u{border-bottom:1px solid #777;padding:0 6px;font-weight:600;color:#123a66;}.cb{display:inline-block;width:13px;height:13px;border:1px solid #000;text-align:center;line-height:11px;font-size:12px;margin-right:4px;vertical-align:-2px;}.hint{font-size:10.5px;}.list th{background:#eee;font-weight:600;border:1px solid #000;padding:3px 5px;}.list td{border:1px solid #000;padding:3.5px 6px;font-size:11.5px;}.c{text-align:center;}.v{font-weight:600;color:#123a66;white-space:nowrap;}.rm td{border:1px solid #000;border-top:none;padding:3px 6px;}.ln{height:21px;}.sig{margin-top:-1px;}.sig td,.sig th{border:1px solid #000;padding:3px 6px;font-size:11.5px;text-align:left;height:21px;}.sig th{text-align:center;font-weight:600;background:#eee;}.mut{color:#555;}.foot{margin-top:8px;}.foot td{border:1px solid #000;padding:3px 7px;font-size:11px;}.print-btn{position:fixed;bottom:18px;right:18px;background:#1F4E79;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-family:'Sarabun',Arial;font-size:14px;}@media print{.print-btn{display:none!important;}@page{size:A4 portrait;margin:6mm;}}.ahu{padding:7mm 12mm;}.ahu .list td{padding:2px 6px;font-size:10.5px;}.ahu .ln{height:15px;}.ahu .sig td,.ahu .sig th{height:18px;padding:2px 6px;}.ahu .line{margin-bottom:3px;}</style></head><body class="${isFcu?'':'ahu'}">
 <div class="top">${ctr?`<div class="ctr">${ev(ctr)}</div>`:''}<div class="ttl">ใบรายการบำรุงรักษา : เครื่องส่งลมเย็น <span>/ ${unit}</span></div></div>
 <div class="frame"><div class="info">
 <div class="line"><span class="f"><b>อาคารภูมิสิริมังคลานุสรณ์ โรงพยาบาลจุฬาลงกรณ์ สภากาชาดไทย</b></span><span class="f"><b>วัน-เดือน-ปี</b> <span class="u">${dd}</span></span></div>
