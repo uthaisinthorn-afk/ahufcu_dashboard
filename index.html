@@ -743,6 +743,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
     </div></div>
     <div class="pm-section"><label>สถานที่ติดตั้ง</label><input class="pm-input" id="pm-location" type="text" placeholder="ห้อง / บริเวณ"></div>
     <div class="pm-section"><label>📐 ขนาด Filter</label><input class="pm-input" id="pm-filter-size" type="text" placeholder="เช่น 20x20x2 นิ้ว"></div>
+    <div class="pm-section"><label>🧽 ชนิด Filter / สายพาน (ลงใบรายละเอียดงานล้างรายเดือน)</label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;"><input type="radio" name="pm-filter-type" value="อลูมิเนียม">อลูมิเนียม</label>
+        <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;"><input type="radio" name="pm-filter-type" value="ใยสังเคราะห์">ใยสังเคราะห์</label>
+        <label style="display:flex;align-items:center;gap:5px;margin:0;cursor:pointer;"><input type="radio" name="pm-filter-type" value="ไม่มี Filter">ไม่มี Filter</label>
+        <label style="display:flex;align-items:center;gap:5px;margin:0 0 0 auto;cursor:pointer;"><input type="checkbox" id="pm-belt-change">🔄 เปลี่ยนสายพาน</label>
+      </div>
+    </div>
     <div class="pm-section"><label>รุ่นเครื่อง (ดึงขนาด/กำลัง BTU/hr จากไฟล์อัตโนมัติ)</label>
       <input class="pm-input" id="pm-model" type="text" readonly style="opacity:.6">
     </div>
@@ -1498,6 +1506,7 @@ function pmSaveDraft(){
     operator:g('pm-operator'),date:g('pm-date'),asset:g('pm-asset'),location:g('pm-location'),
     assetHas:(document.getElementById('pm-asset-has-yes')&&document.getElementById('pm-asset-has-yes').checked)?'yes':(document.getElementById('pm-asset-has-no')&&document.getElementById('pm-asset-has-no').checked)?'no':'',
     beltNo:g('pm-belt-no'),valve:pmGetValveStatus(),
+    filterType:pmGetFilterType(),beltChange:!!(document.getElementById('pm-belt-change')||{}).checked,
     ts:Date.now()
   };
   const isEmpty=!draft.valve&&!draft.status&&!draft.note&&!draft.unavailReason&&
@@ -1542,8 +1551,15 @@ function pmApplyDraft(draft){
     if(draft.assetHas==='yes'&&draft.asset){document.getElementById('pm-asset').value=draft.asset;}
   }
   if(draft.beltNo){const el=document.getElementById('pm-belt-no');if(el)el.value=draft.beltNo;}
+  if(draft.filterType)pmSetFilterType(draft.filterType);
+  if(draft.beltChange){const el=document.getElementById('pm-belt-change');if(el)el.checked=true;}
   pmCheckThresholds();
 }
+// ชนิด Filter (อลูมิเนียม / ใยสังเคราะห์ / ไม่มี Filter) — จำค่าล่าสุดต่อเครื่องไว้เติมให้ครั้งถัดไป
+const filterTypeMap=(()=>{try{return JSON.parse(localStorage.getItem('ac_filter_type')||'{}');}catch(e){return {};}})();
+function saveFilterTypeMap(){try{localStorage.setItem('ac_filter_type',JSON.stringify(filterTypeMap));}catch(e){}}
+function pmGetFilterType(){const el=document.querySelector('input[name="pm-filter-type"]:checked');return el?el.value:'';}
+function pmSetFilterType(v){document.querySelectorAll('input[name="pm-filter-type"]').forEach(el=>{el.checked=el.value===v;});}
 function pmClearDraft(machineId){
   if(!machineId)return;
   delete pmDraftMap[machineId];
@@ -1943,6 +1959,8 @@ function openPMPanel(i){
   document.getElementById('pm-location').value=r[4]||'';
   document.getElementById('pm-filter-size').value=filterSizeMap[r[0]]||'';
   document.getElementById('pm-belt-no').value=beltNoMap[r[0]]||'';
+  pmSetFilterType(filterTypeMap[r[0]]||'');
+  document.getElementById('pm-belt-change').checked=false;
   const hasAssetInit=!!(r[1]&&String(r[1]).trim());
   document.getElementById('pm-asset-has-yes').checked=hasAssetInit;
   document.getElementById('pm-asset-has-no').checked=!hasAssetInit;
@@ -2195,6 +2213,9 @@ async function pmDoSubmit(){
     const beltNo=document.getElementById('pm-belt-no').value.trim();
     if(beltNo){beltNoMap[RAW[pmSelIdx][0]]=beltNo;}else{delete beltNoMap[RAW[pmSelIdx][0]];}
     saveBeltNoMap();
+    const fType=pmGetFilterType();
+    if(fType){filterTypeMap[RAW[pmSelIdx][0]]=fType;}
+    saveFilterTypeMap();
     if(pmStatus==='ok'){overrides[pmSelIdx]='ok';pmSet.add(pmSelIdx);}
     else if(pmStatus==='broken'){overrides[pmSelIdx]='broken';pmSet.delete(pmSelIdx);}
     else if(pmStatus==='deface'){overrides[pmSelIdx]='deface';pmSet.add(pmSelIdx);}
@@ -2226,6 +2247,9 @@ async function pmDoSubmit(){
     filter_size:document.getElementById('pm-filter-size').value,
     asset_has:assetHasYes?'มี':'ไม่มี',
     belt_no:document.getElementById('pm-belt-no').value,
+    // ใบรายละเอียดงานล้างรายเดือน: แยกแท็บตามผู้รับเหมา (ปุ่มผู้รับเหมาในหน้าต่างเครื่อง ถ้าไม่ได้เลือกใช้ผู้ปฏิบัติงานที่เป็นผู้รับเหมา)
+    filter_type:pmGetFilterType(),belt_changed:document.getElementById('pm-belt-change').checked?'Y':'',
+    contractor:contractorMap[r[0]]||(['Emerald nics','Techno'].includes(op)?op:''),
     pm_round:pmRound||'-',
     checklist:pmStatus==='unavailable'?'-':pmGetChecklist(),work_status:pmStatus,status_label:sm2[pmStatus]||pmStatus,
     deface_reasons:pmStatus==='deface'?pmGetDefaceReasons():'-',
