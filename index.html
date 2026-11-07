@@ -1577,6 +1577,17 @@ function floorOrder(fl){if(fl.startsWith('B')){const n=parseInt(fl.slice(1));ret
 function saveOverrides(){try{localStorage.setItem('ac_st',JSON.stringify(overrides));}catch(e){}}
 function savePMSet(){try{localStorage.setItem('ac_pm',JSON.stringify([...pmSet]));}catch(e){}}
 
+// ── ➕ เครื่องที่เพิ่มเอง (XM): ต่อท้าย RAW ก่อนสร้าง index เพื่อไม่ให้ index ของเครื่องเดิมเลื่อน ──
+const XM_BASE_LEN = RAW.length;
+const xmKey = id => String(id || '').trim().toUpperCase().replace(/\s+/g, '');
+function xmAhuRow(m){return [m.id, m.asset||'', 0, m.type||'FCU', m.loc||'', m.zone||'', m.floor, m.dept||'', m.btu||'', '', ''];}
+(function(){
+  try{
+    const a=JSON.parse(localStorage.getItem('xm_extra_AHU')||'[]');
+    const have=new Set(RAW.map(r=>xmKey(r[0])));
+    (Array.isArray(a)?a:[]).forEach(m=>{ if(!m||!m.id||!m.floor||have.has(xmKey(m.id)))return; have.add(xmKey(m.id)); RAW.push(xmAhuRow(m)); });
+  }catch(e){}
+})();
 // build indexes
 const byFloorZone={};
 const allFloors=new Set(),allZones=new Set();
@@ -3952,6 +3963,292 @@ async function dtApiCall(payload) {
   });
   return res.json();
 }
+</script>
+
+<script>
+/* ===== ➕ เพิ่ม AHU/FCU ที่พบเพิ่มหน้างาน: ตั้งค่าเฉพาะแอพนี้ (สถานะเก็บตามลำดับ index → เพิ่มต่อท้ายเท่านั้น) ===== */
+const XM_CFG = {
+  app: 'AHU', unitName: 'เครื่อง AHU/FCU', idExample: '1F-8/60', gsUrl: GS_PM,
+  fields: [
+    { k: 'type', label: 'ประเภท', req: true, opts: ['FCU', 'AHU'], keep: true },
+    { k: 'btu', label: 'ขนาด (BTU/hr)', list: () => RAW.map(r => r[8]) },
+    { k: 'dept', label: 'หน่วยงาน / พื้นที่', list: () => RAW.map(r => r[7]), keep: true }
+  ],
+  floors: () => RAW.map(r => r[6]),
+  zones: () => RAW.map(r => r[5]),
+  exists: id => RAW.some(r => xmKey(r[0]) === xmKey(id)),
+  addRow: m => {
+    const i = RAW.length;
+    RAW.push(xmAhuRow(m));
+    const fl = m.floor, zn = m.zone || 'N/A';
+    // เพิ่มตัวเลือกใน select เฉพาะที่สร้างรายการแล้ว (ถ้ายังไม่ล็อกอิน initApp จะสร้างจาก floorsSorted ให้เอง)
+    const add = (sel, v, l) => { const s = document.getElementById(sel); if (s && s.options.length > 1 && ![...s.options].some(o => o.value === v)) s.appendChild(new Option(l, v)); };
+    if (!allFloors.has(fl)) { allFloors.add(fl); floorsSorted.push(fl); floorsSorted.sort((a, b) => floorOrder(a) - floorOrder(b)); add('floorSel', fl, 'ชั้น ' + fl); add('pmFloor', fl, 'ชั้น ' + fl); }
+    if (!allZones.has(zn)) { allZones.add(zn); zonesSorted.push(zn); zonesSorted.sort(); add('zoneSel', zn, 'โซน ' + zn); add('pmZone', zn, 'โซน ' + zn); }
+    if (!byFloorZone[fl]) byFloorZone[fl] = {};
+    if (!byFloorZone[fl][zn]) byFloorZone[fl][zn] = [];
+    const arr = byFloorZone[fl][zn];
+    arr.push(i);
+    arr.sort((a, b) => { const ka = machineIdOrder(RAW[a][0]), kb = machineIdOrder(RAW[b][0]); return ka < kb ? -1 : ka > kb ? 1 : 0; });
+    if (pmActive && fl === pmFloor && zn === pmZone) { pmSet.add(i); savePMSet(); }
+  },
+  // สถานะ/PM เก็บตาม index → ลบแล้วต้องเลื่อน index ที่อยู่หลังเครื่องนี้ แล้วรีโหลดหน้า
+  removeRow: id => {
+    const i = RAW.findIndex(r => xmKey(r[0]) === xmKey(id));
+    if (i < XM_BASE_LEN) return true; // ไม่พบ หรือฝังอยู่ในไฟล์แล้ว
+    const nOv = {};
+    Object.keys(overrides).forEach(k => { const n = +k; if (n === i) return; nOv[n > i ? n - 1 : n] = overrides[k]; });
+    Object.keys(overrides).forEach(k => delete overrides[k]); Object.assign(overrides, nOv); saveOverrides();
+    const np = [...pmSet].filter(n => n !== i).map(n => n > i ? n - 1 : n);
+    pmSet.clear(); np.forEach(n => pmSet.add(n)); savePMSet();
+    return false;
+  },
+  refresh: () => { try { render(); } catch(e) {} },
+  openItem: id => { const i = RAW.findIndex(r => xmKey(r[0]) === xmKey(id)); if (i >= 0) openModal(i); },
+  defaults: () => ({ floor: (pmActive && pmFloor) || filter.floor || '', zone: (pmActive && pmZone) || filter.zone || '' }),
+  describe: m => (m.type || '') + (m.btu ? ' ' + m.btu + ' BTU' : ''),
+  btnClass: 'btn-toggle-pm', btnStyle: 'border-color:rgba(126,232,160,.5);color:#7ee8a0;margin-left:6px',
+  mount: btn => { document.getElementById('btnOpenPlan').after(btn); }
+};
+</script>
+<!-- ============================================================
+     ➕ เพิ่มเครื่องที่พบเพิ่มหน้างาน (ไม่มีในรายการของแอพ)
+     - เก็บในเครื่องทันที + บันทึกขึ้นชีต EXTRA_MACHINES ของแอพนี้ → มือถือ/คอมเครื่องอื่นดึงไปแสดงอัตโนมัติ
+     - ตั้งค่าเฉพาะแอพอยู่ใน XM_CFG (ประกาศก่อนส่วนนี้)
+     ============================================================ -->
+<style>
+.xm-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9500;align-items:center;justify-content:center;padding:14px;}
+.xm-ov.open{display:flex;}
+.xm-box{background:#111827;border:1px solid #243040;border-radius:14px;width:min(600px,96vw);max-height:92vh;overflow-y:auto;color:#d0e8f0;font-family:'Sarabun',sans-serif;padding:18px;box-sizing:border-box;}
+.xm-box h3{font-size:16px;color:#7ee8a0;margin:0 0 4px;display:flex;align-items:center;gap:8px;}
+.xm-box h3 button{margin-left:auto;background:none;border:none;color:#8aa0b5;font-size:22px;cursor:pointer;line-height:1;}
+.xm-sub{font-size:12px;color:#6a8aa0;margin-bottom:12px;}
+.xm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.xm-f{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.xm-f.full{grid-column:1/-1;}
+.xm-f label{font-size:12px;color:#8aa0b5;}
+.xm-f label b{color:#ff6b6b;}
+.xm-f input,.xm-f select{width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;border:1px solid #243040;background:#0e1420;color:#d0e8f0;font-family:inherit;font-size:14px;}
+.xm-err{color:#ff8a8a;font-size:13px;min-height:18px;margin:10px 0 4px;}
+.xm-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.xm-acts button{flex:1;min-width:150px;padding:10px;border-radius:8px;border:1px solid rgba(126,232,160,.5);background:rgba(126,232,160,.14);color:#7ee8a0;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.xm-acts button.alt{border-color:rgba(0,229,255,.45);background:rgba(0,229,255,.12);color:#00e5ff;}
+.xm-acts button:disabled{opacity:.5;cursor:wait;}
+.xm-hint{font-size:11.5px;color:#6a8aa0;line-height:1.6;margin-top:10px;}
+.xm-lt{font-size:13px;color:#7ee8a0;font-weight:700;margin:14px 0 6px;border-top:1px solid #243040;padding-top:12px;}
+.xm-row{display:flex;align-items:center;gap:8px;padding:8px;border:1px dashed rgba(126,232,160,.35);border-radius:8px;margin-bottom:6px;}
+.xm-row .t{flex:1;min-width:0;cursor:pointer;}
+.xm-row .t b{color:#d0e8f0;font-size:13px;}
+.xm-row .t div{font-size:11.5px;color:#8aa0b5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.xm-row .p{font-size:10px;color:#ffd54a;margin-left:4px;}
+.xm-row button{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.4);color:#ff8a8a;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;}
+.xm-empty{font-size:12px;color:#6a8aa0;padding:6px;}
+.xm-btn{padding:8px 12px;border-radius:8px;border:1px solid rgba(126,232,160,.5);background:rgba(126,232,160,.12);color:#7ee8a0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.xm-toast{display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0e1420;border:1px solid #7ee8a0;color:#d0e8f0;padding:10px 16px;border-radius:10px;z-index:9600;font-family:'Sarabun',sans-serif;font-size:14px;max-width:90vw;text-align:center;}
+@media (max-width:520px){.xm-grid{grid-template-columns:1fr;}}
+</style>
+<div class="xm-ov" id="xmOv">
+  <div class="xm-box">
+    <h3><span id="xmTitle">➕ เพิ่มเครื่อง</span><button type="button" id="xmClose">✕</button></h3>
+    <div class="xm-sub">สำหรับเครื่องที่หน้างานมีจริง แต่ไม่มีในรายการของแอพ</div>
+    <div class="xm-grid" id="xmFields"></div>
+    <div class="xm-err" id="xmErr"></div>
+    <div class="xm-acts">
+      <button type="button" id="xmSave">💾 บันทึก</button>
+      <button type="button" class="alt" id="xmSaveOpen">💾 บันทึก + เปิดเครื่องนี้ทำ PM</button>
+    </div>
+    <div class="xm-hint" id="xmHint"></div>
+    <div class="xm-lt">รายการที่เพิ่มเอง (<span id="xmCount">0</span>)</div>
+    <div id="xmList"></div>
+  </div>
+</div>
+<div class="xm-toast" id="xmToast"></div>
+<script>
+const XM = (function(){
+  const C = XM_CFG;
+  const LS = 'xm_extra_' + C.app, LS_IGN = 'xm_extra_ign_' + C.app, LS_NAME = 'xm_name_' + C.app;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const key = id => String(id || '').trim().toUpperCase().replace(/\s+/g, '');
+  const normFloor = v => String(v || '').replace(/^ชั้น\s*/, '').trim().toUpperCase();
+  const normZone = v => String(v || '').replace(/^(โซน|อาคาร)\s*/, '').trim().toUpperCase();
+  const lsGet = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch(e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
+  const load = () => { const a = lsGet(LS, []); return Array.isArray(a) ? a : []; };
+  const save = list => lsSet(LS, list);
+  const ign = () => new Set(lsGet(LS_IGN, []));
+  const saveIgn = s => lsSet(LS_IGN, [...s]);
+
+  let toastT;
+  function toast(m) { const t = $('xmToast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 3000); }
+
+  // ฟิลด์ในฟอร์ม: มาตรฐาน + ฟิลด์เฉพาะแอพ (C.fields)
+  const FIELDS = [
+    { k: 'id', label: 'หมายเลขเครื่อง / รหัสอุปกรณ์', req: true, ph: C.idExample ? 'เช่น ' + C.idExample : '' },
+    { k: 'asset', label: 'หมายเลขครุภัณฑ์', ph: 'เว้นว่างได้ถ้าไม่มีป้าย' },
+    { k: 'floor', label: 'ชั้น', req: true, list: () => C.floors(), ph: 'เช่น 8, B1, MZ' },
+    { k: 'zone', label: C.zoneLabel || 'โซน', req: !!C.zoneRequired, list: () => C.zones(), ph: C.zonePh || 'เช่น A, B, C, D' }
+  ].concat(C.fields || []).concat([
+    { k: 'loc', label: 'สถานที่ติดตั้ง / ห้อง', req: true, full: true, ph: 'เช่น ทางเดินหน้าบันไดหนีไฟ 2' },
+    { k: 'by', label: 'ผู้เพิ่ม', full: true, ph: 'ชื่อผู้ตรวจ' }
+  ]);
+
+  function buildForm() {
+    $('xmFields').innerHTML = FIELDS.map(f => {
+      const lbl = '<label>' + esc(f.label) + (f.req ? ' <b>*</b>' : '') + '</label>';
+      let inp;
+      if (f.opts) inp = '<select id="xmF_' + f.k + '"><option value="">-- เลือก --</option>' + f.opts.map(o => '<option>' + esc(o) + '</option>').join('') + '</select>';
+      else inp = '<input id="xmF_' + f.k + '" autocomplete="off" placeholder="' + esc(f.ph || '') + '"' + (f.list ? ' list="xmL_' + f.k + '"' : '') + '>' +
+        (f.list ? '<datalist id="xmL_' + f.k + '"></datalist>' : '');
+      return '<div class="xm-f' + (f.full ? ' full' : '') + '">' + lbl + inp + '</div>';
+    }).join('');
+  }
+  function fillLists() {
+    FIELDS.forEach(f => {
+      if (!f.list) return;
+      const vals = [...new Set((f.list() || []).map(v => String(v == null ? '' : v).trim()).filter(Boolean))];
+      $('xmL_' + f.k).innerHTML = vals.map(v => '<option value="' + esc(v) + '">').join('');
+    });
+  }
+
+  function open() {
+    fillLists();
+    $('xmErr').textContent = '';
+    const d = C.defaults ? C.defaults() : {};
+    ['floor', 'zone'].forEach(k => { if (!$('xmF_' + k).value && d[k]) $('xmF_' + k).value = d[k]; });
+    if (!$('xmF_by').value) $('xmF_by').value = lsGet(LS_NAME, '') || (d.by || '');
+    renderList();
+    $('xmOv').classList.add('open');
+    setTimeout(() => $('xmF_id').focus(), 60);
+  }
+  function close() { $('xmOv').classList.remove('open'); }
+
+  function renderList() {
+    const list = load();
+    $('xmCount').textContent = list.length;
+    $('xmList').innerHTML = list.length ? list.map(m =>
+      '<div class="xm-row"><div class="t" data-open="' + esc(m.id) + '"><b>' + esc(m.id) + '</b>' + (m.pending ? '<span class="p">⏳ รอส่งขึ้น Sheet</span>' : '') +
+      '<div>ชั้น ' + esc(m.floor) + (m.zone ? ' · ' + esc(C.zoneLabel || 'โซน') + ' ' + esc(m.zone) : '') + ' · ' + esc(m.loc || '-') +
+      (C.describe ? ' · ' + esc(C.describe(m)) : '') + '</div></div><button type="button" data-del="' + esc(m.id) + '">ลบ</button></div>'
+    ).join('') : '<div class="xm-empty">ยังไม่มีเครื่องที่เพิ่มเอง</div>';
+  }
+
+  // ── ติดต่อ Apps Script ของแอพนี้ ──
+  async function post(payload) {
+    if (!C.gsUrl) return { success: false, offline: true };
+    const res = await fetch(C.gsUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    try { return await res.json(); } catch(e) { return { success: true }; }
+  }
+  async function pushPending() {
+    const list = load();
+    let changed = false;
+    for (const m of list.filter(x => x.pending)) {
+      try {
+        const j = await post({ action: 'add_machine', app: C.app, machine: Object.assign({}, m, { pending: undefined }) });
+        if (j && j.success) { m.pending = false; changed = true; }
+      } catch(e) { break; }
+    }
+    if (changed) { save(list); if ($('xmOv').classList.contains('open')) renderList(); }
+  }
+
+  // เพิ่มเข้าแอพ (ข้ามถ้ามีหมายเลขนี้อยู่แล้ว เช่น ฝังในไฟล์แล้ว)
+  function addToApp(m) {
+    if (C.exists(m.id)) return false;
+    C.addRow(m);
+    return true;
+  }
+
+  async function syncServer() {
+    if (!C.gsUrl) return;
+    await pushPending();
+    let j;
+    try { j = await (await fetch(C.gsUrl + '?action=getExtraMachines')).json(); } catch(e) { return; }
+    if (!j || !Array.isArray(j.machines)) return;
+    const list = load(), ig = ign();
+    const have = new Set(list.map(m => key(m.id)));
+    let added = 0, removed = [];
+    j.machines.forEach(sm => {
+      const k = key(sm.id);
+      if (!k || have.has(k) || ig.has(k)) return;
+      const m = { id: String(sm.id).trim(), asset: sm.asset || '', floor: normFloor(sm.floor), zone: normZone(sm.zone), loc: sm.loc || '', by: sm.by || '', added: sm.added || '' };
+      (C.fields || []).forEach(f => { m[f.k] = sm[f.k] || ''; });
+      if (!m.floor) return;
+      list.push(m); have.add(k);
+      if (addToApp(m)) added++;
+    });
+    const del = new Set((j.deleted || []).map(key));
+    const keep = list.filter(m => { if (del.has(key(m.id)) && !m.pending) { removed.push(m.id); return false; } return true; });
+    if (added || removed.length) save(keep);
+    if (added) { C.refresh(); toast('➕ ดึงเครื่องที่ทีมเพิ่มไว้มาแสดง ' + added + ' เครื่อง'); }
+    if (removed.length) {
+      const needReload = removed.map(id => C.removeRow(id)).some(r => r === false);
+      if (needReload) { toast('🗑️ มีเครื่องที่ทีมลบออก — กำลังรีโหลด...'); setTimeout(() => location.reload(), 900); return; }
+      C.refresh();
+    }
+    if ($('xmOv').classList.contains('open')) renderList();
+  }
+
+  async function submit(openAfter) {
+    const v = k => ($('xmF_' + k) ? $('xmF_' + k).value.trim() : '');
+    const m = { id: v('id').toUpperCase().replace(/\s+/g, ''), asset: v('asset'), floor: normFloor(v('floor')), zone: normZone(v('zone')),
+      loc: v('loc'), by: v('by'), added: new Date().toISOString(), pending: !!C.gsUrl };
+    (C.fields || []).forEach(f => { m[f.k] = v(f.k); });
+    const err = $('xmErr');
+    const miss = FIELDS.find(f => f.req && !m[f.k]);
+    if (miss) { err.textContent = '⚠️ กรุณากรอก ' + miss.label; $('xmF_' + miss.k).focus(); return; }
+    if (C.exists(m.id)) { err.innerHTML = '⚠️ มีหมายเลข <b>' + esc(m.id) + '</b> อยู่ในแอพแล้ว'; return; }
+    if (m.by) lsSet(LS_NAME, m.by);
+    const list = load(); list.push(m); save(list);
+    const ig = ign(); if (ig.delete(key(m.id))) saveIgn(ig);
+    C.addRow(m);
+    C.refresh();
+    ['id', 'asset', 'loc'].forEach(k => $('xmF_' + k).value = '');
+    (C.fields || []).forEach(f => { if (!f.keep) $('xmF_' + f.k).value = ''; });
+    err.textContent = '';
+    renderList();
+    toast('➕ เพิ่ม ' + m.id + ' (ชั้น ' + m.floor + ') แล้ว' + (C.gsUrl ? ' — กำลังบันทึกขึ้น Sheet' : ''));
+    if (openAfter) { close(); C.openItem(m.id); }
+    if (C.gsUrl) pushPending().then(() => { if (!load().some(x => key(x.id) === key(m.id) && x.pending)) toast('✅ บันทึก ' + m.id + ' ขึ้น Sheet แล้ว (เครื่องอื่นจะเห็นด้วย)'); });
+  }
+
+  async function remove(id) {
+    if (!confirm('ลบ ' + id + ' ออกจากรายการที่เพิ่มเอง?\n(ประวัติ PM ที่ส่งไปแล้วใน Sheet ยังอยู่ครบ)')) return;
+    save(load().filter(m => key(m.id) !== key(id)));
+    const ig = ign(); ig.add(key(id)); saveIgn(ig);
+    try { await post({ action: 'delete_machine', app: C.app, machine_id: id, by: lsGet(LS_NAME, '') }); } catch(e) {}
+    if (C.removeRow(id) === false) { toast('🗑️ ลบ ' + id + ' แล้ว — กำลังรีโหลด...'); setTimeout(() => location.reload(), 700); return; }
+    C.refresh(); renderList(); toast('🗑️ ลบ ' + id + ' แล้ว');
+  }
+
+  function init() {
+    $('xmTitle').textContent = '➕ เพิ่ม' + (C.unitName || 'เครื่อง') + ' (พบเพิ่มหน้างาน)';
+    $('xmHint').innerHTML = '• เครื่องที่เพิ่มจะแสดงในรายการทันที และทำ PM / แจ้ง DEFECT ได้เหมือนเครื่องเดิม<br>' +
+      (C.gsUrl ? '• บันทึกขึ้น Google Sheet (ชีต EXTRA_MACHINES) — มือถือ/คอมเครื่องอื่นที่เปิดแอพจะเห็นเครื่องนี้ด้วย'
+               : '• ⚠️ แอพนี้ยังไม่ได้ตั้งค่า Apps Script — เครื่องที่เพิ่มจะเห็นเฉพาะในเครื่องนี้');
+    buildForm();
+    $('xmClose').onclick = close;
+    $('xmOv').addEventListener('click', e => { if (e.target.id === 'xmOv') close(); });
+    $('xmSave').onclick = () => submit(false);
+    $('xmSaveOpen').onclick = () => submit(true);
+    $('xmList').addEventListener('click', e => {
+      const d = e.target.closest('[data-del]'); if (d) { remove(d.dataset.del); return; }
+      const o = e.target.closest('[data-open]'); if (o) { close(); C.openItem(o.dataset.open); }
+    });
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = C.btnClass || 'xm-btn'; btn.textContent = '➕ เพิ่ม' + (C.unitName || 'เครื่อง');
+    if (C.btnStyle) btn.style.cssText = C.btnStyle;
+    btn.addEventListener('click', open);
+    C.mount(btn);
+    let added = 0;
+    load().forEach(m => { if (addToApp(m)) added++; });
+    if (added) C.refresh();
+    syncServer();
+    setInterval(syncServer, 120000);
+  }
+
+  return { init, open, sync: syncServer };
+})();
+XM.init();
 </script>
 
 </body>
