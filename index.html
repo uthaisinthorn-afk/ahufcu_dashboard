@@ -766,6 +766,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
     <hr class="pm-divider">
     <div class="pm-section"><label>รอบการทำ PM</label>
       <div class="pm-status-row">
+        <button class="pm-st-btn rnd" data-pmround="M"><span class="pm-si">🅼</span>รอบ M<br><span style="font-size:9px;opacity:.7">1 เดือน</span></button>
         <button class="pm-st-btn rnd" data-pmround="S"><span class="pm-si">🆂</span>รอบ S<br><span style="font-size:9px;opacity:.7">6 เดือน</span></button>
       </div>
       <div style="font-size:10.5px;color:#6a7a90;margin-top:6px" id="pm-round-hint">รอบ S (6 เดือน) — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย</div>
@@ -1518,8 +1519,15 @@ function pmSaveDraft(){
   savePmDraftMap();
 }
 function pmApplyDraft(draft){
+  // กรอกค้างไว้ในรอบ M → เปิดกลับมาเป็นรอบ M
+  if(draft.round==='M'&&pmRound!=='M'){
+    pmRound='M';
+    document.querySelectorAll('.pm-st-btn.rnd').forEach(b=>b.classList.toggle('sel',b.dataset.pmround==='M'));
+    document.getElementById('pm-round-hint').textContent=PM_ROUND_LABELS.M+' — ไม่ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิ เพื่อความรวดเร็ว';
+    pmRenderChecklist();
+  }
   // draft เก่าก่อนเปลี่ยนเป็น 13 รายการ ลำดับไม่ตรงกัน จึงไม่นำ checklist มาใช้
-  if(draft.round==='S'&&(draft.checklist||[]).length===pmItems().items.length){
+  if((draft.round==='S'||draft.round==='M')&&(draft.checklist||[]).length===pmItems().items.length){
     draft.checklist.forEach((checked,idx)=>{const el=document.getElementById('pm-rc'+idx);if(el)el.checked=checked;});
     const valveEl=document.querySelector('input[name="pm-valve"][value="'+(draft.valve||'')+'"]');if(valveEl)valveEl.checked=true;
   }
@@ -1986,7 +1994,7 @@ function openPMPanel(i){
   document.getElementById('pm-model').value=sizeLabel;
   document.querySelectorAll('.pm-st-btn').forEach(b=>b.classList.remove('sel'));
   pmStatus=null;pmRound='S';
-  document.querySelector('.pm-st-btn.rnd').classList.add('sel');
+  document.querySelector('.pm-st-btn.rnd[data-pmround="S"]').classList.add('sel');
   ['pm-print-btn','pm-breakdown-btn','pm-doctrack-btn'].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display='none';});
   document.getElementById('pm-chk-section').style.display='none';
   document.getElementById('pm-round-hint').textContent=PM_ROUND_LABELS.S+' — ต้องกรอกค่าแรงลม/กระแส/อุณหภูมิด้วย';
@@ -2040,8 +2048,11 @@ const PM_CHECK={
        meas:{temp:12,amp:15,air:18},std:{12:'°C',13:'°C',15:'A',18:'CFM'},docNo:'-'}
 };
 function pmItems(){const r=RAW[pmSelIdx];return PM_CHECK[r&&r[3]==='AHU'?'AHU':'FCU'];}
-const PM_ROUND_LABELS={S:'รอบ S (6 เดือน)'};
+const PM_ROUND_LABELS={M:'รอบ M (1 เดือน)',S:'รอบ S (6 เดือน)'};
 let pmRound=null;
+// ข้อในรอบ: รอบ M = เฉพาะข้อ M · รอบ Q = ข้อ M+Q · รอบ S = ทุกข้อ
+const PM_ROUND_RANK={M:0,Q:1,S:2};
+function pmItemInRound(i,round){const ck=pmItems();const r=ck.rounds[i]||'S';round=round||pmRound||'S';return (PM_ROUND_RANK[r]??2)<=(PM_ROUND_RANK[round]??2);}
 
 function pmRenderChecklist(){
   const box=document.getElementById('pm-checklist-dynamic');
@@ -2049,7 +2060,7 @@ function pmRenderChecklist(){
   if(!pmRound){box.innerHTML='<div style="font-size:11.5px;color:#6a7a90">กรุณาเลือกรอบ PM (M/Q/S) ก่อน</div>';return;}
   title.textContent='Checklist การบำรุงรักษา — '+PM_ROUND_LABELS[pmRound];
   const items=pmItems().items;
-  box.innerHTML=items.map((label,idx)=>`<label class="pm-chk-item"><input type="checkbox" id="pm-rc${idx}"><span>${idx+1}. ${label}</span></label>${idx===1?'<div class="pm-valve-row"><span>สถานะ Motor Drive <b style="color:#ff5555">*</b></span><label><input type="radio" name="pm-valve" value="ใช้ได้"> ใช้ได้</label><label><input type="radio" name="pm-valve" value="ไม่ได้"> ไม่ได้</label></div>':''}`).join('');
+  box.innerHTML=items.map((label,idx)=>!pmItemInRound(idx)?'':`<label class="pm-chk-item"><input type="checkbox" id="pm-rc${idx}"><span>${idx+1}. ${label}</span></label>${idx===1?'<div class="pm-valve-row"><span>สถานะ Motor Drive <b style="color:#ff5555">*</b></span><label><input type="radio" name="pm-valve" value="ใช้ได้"> ใช้ได้</label><label><input type="radio" name="pm-valve" value="ไม่ได้"> ไม่ได้</label></div>':''}`).join('');
   const cAll=document.getElementById('pm-c-all');if(cAll)cAll.checked=false;
 }
 
@@ -2963,7 +2974,7 @@ function pmBuildCheckSheetHtml(){
   const ck=pmItems(),std=ck.std;
   const check={1:valve?(valve==='ใช้ได้'?'✓ ใช้ได้':'X ไม่ได้'):mark(1)};
   Object.entries(ck.meas).forEach(([k,i])=>{check[i]=ba(k)||mark(i);});
-  const rows=ck.items.map((t,i)=>`<tr><td class="c">${i+1}</td><td>${t}</td><td class="c">${ck.rounds[i]}</td><td class="c">${std[i]||''}</td><td class="c v">${check[i]||mark(i)}</td></tr>`).join('');
+  const rows=ck.items.map((t,i)=>!pmItemInRound(i)?'':`<tr><td class="c">${i+1}</td><td>${t}</td><td class="c">${ck.rounds[i]}</td><td class="c">${std[i]||''}</td><td class="c v">${check[i]||mark(i)}</td></tr>`).join('');
   const blank='<tr><td class="ln">&nbsp;</td></tr>';
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Check Sheet–${id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Sarabun',Arial,sans-serif;font-size:12px;color:#000;padding:9mm 13mm;}table{width:100%;border-collapse:collapse;}.top{text-align:right;margin-bottom:4px;}.ctr{font-size:17px;font-weight:700;color:#1F4E79;}.ttl{font-size:15px;font-weight:700;}.ttl span{font-weight:400;color:#555;}.frame{border:1.5px solid #000;}.info{padding:6px 8px;}.line{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:5px;flex-wrap:nowrap;}.line:last-child{margin-bottom:0;}.f{white-space:nowrap;}.f b{font-weight:600;}.u{border-bottom:1px solid #777;padding:0 6px;font-weight:600;color:#123a66;}.cb{display:inline-block;width:13px;height:13px;border:1px solid #000;text-align:center;line-height:11px;font-size:12px;margin-right:4px;vertical-align:-2px;}.hint{font-size:10.5px;}.list th{background:#eee;font-weight:600;border:1px solid #000;padding:3px 5px;}.list td{border:1px solid #000;padding:3.5px 6px;font-size:11.5px;}.c{text-align:center;}.v{font-weight:600;color:#123a66;white-space:nowrap;}.rm td{border:1px solid #000;border-top:none;padding:3px 6px;}.ln{height:21px;}.sig{margin-top:-1px;}.sig td,.sig th{border:1px solid #000;padding:3px 6px;font-size:11.5px;text-align:left;height:21px;}.sig th{text-align:center;font-weight:600;background:#eee;}.mut{color:#555;}.foot{margin-top:8px;}.foot td{border:1px solid #000;padding:3px 7px;font-size:11px;}.print-btn{position:fixed;bottom:18px;right:18px;background:#1F4E79;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-family:'Sarabun',Arial;font-size:14px;}@media print{.print-btn{display:none!important;}@page{size:A4 portrait;margin:6mm;}}.ahu{padding:7mm 12mm;}.ahu .list td{padding:2px 6px;font-size:10.5px;}.ahu .ln{height:15px;}.ahu .sig td,.ahu .sig th{height:18px;padding:2px 6px;}.ahu .line{margin-bottom:3px;}</style></head><body class="${isFcu?'':'ahu'}">
 <div class="top">${ctr?`<div class="ctr">${ev(ctr)}</div>`:''}<div class="ttl">ใบรายการบำรุงรักษา : เครื่องส่งลมเย็น <span>/ ${unit}</span></div></div>
