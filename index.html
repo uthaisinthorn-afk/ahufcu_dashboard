@@ -787,7 +787,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
     </div>
     <div class="pm-section" id="pm-measure-section">
       <label>ค่าที่วัดได้ (ก่อนล้าง / หลังล้าง)</label>
-      <div class="pm-meas-std" id="pm-meas-std" style="font-size:11px;color:#7ee8a0;margin-top:3px">กรอกตัวเลขเอง · เกณฑ์แรงลม AHU 400-1000 CFM · FCU 250-600 CFM</div>
+      <div class="pm-meas-std" id="pm-meas-std" style="font-size:11px;color:#7ee8a0;margin-top:3px">กรอกตัวเลขเอง · ตัดสินผ่าน/ไม่ผ่านจากค่าหลังล้าง · เกณฑ์แรงลม AHU 400-1000 CFM · FCU 250-600 CFM</div>
       <div class="pm-row2" style="margin-top:6px">
         <div><label style="font-size:11px;opacity:.8">💨 แรงลม (CFM) — ก่อนล้าง</label><input class="pm-input pm-meas" id="pm-air-before" type="number" inputmode="decimal" step="1" min="0" max="5000" placeholder="เช่น 450" autocomplete="off" oninput="pmCheckThresholds()"></div>
         <div><label style="font-size:11px;opacity:.8">💨 แรงลม (CFM) — หลังล้าง</label><input class="pm-input pm-meas" id="pm-air-after" type="number" inputmode="decimal" step="1" min="0" max="5000" placeholder="เช่น 520" autocomplete="off" oninput="pmCheckThresholds()"></div>
@@ -2091,12 +2091,10 @@ function pmGetThresholdWarnings(){
   const r=RAW[pmSelIdx]||[];
   const type=String(r[3]||'').toUpperCase().indexOf('FCU')!==-1?'FCU':'AHU';
   const th=PM_THRESHOLDS[type];
+  // ตัดสินผ่าน/ไม่ผ่าน (กรอบชมพู) จากค่าหลังล้างเท่านั้น — ค่าก่อนล้างเก็บไว้เทียบผล ไม่นำมาตัดสิน
   const fields=[
-    {id:'pm-air-before',label:'แรงลมก่อนล้าง',key:'air'},
     {id:'pm-air-after', label:'แรงลมหลังล้าง', key:'air'},
-    {id:'pm-amp-before',label:'กระแสไฟฟ้าก่อนล้าง',key:'amp'},
     {id:'pm-amp-after', label:'กระแสไฟฟ้าหลังล้าง', key:'amp'},
-    {id:'pm-temp-before',label:'อุณหภูมิก่อนล้าง',key:'temp'},
     {id:'pm-temp-after', label:'อุณหภูมิหลังล้าง', key:'temp'}
   ];
   const warnings=[];
@@ -2119,6 +2117,43 @@ function pmGetThresholdWarnings(){
     }
   });
   return warnings;
+}
+// ค่าหลังล้าง {air,amp,temp} ผิดเกณฑ์หรือไม่ (ใช้คำนวณกรอบชมพูจากข้อมูลในชีต)
+function pmIsOutAfter(type,v){
+  const th=PM_THRESHOLDS[type];
+  if(v.air!=null&&pmClassifyAirZone(type,v.air).level!=='ok')return true;
+  for(const k of ['amp','temp']){
+    if(v[k]==null)continue; const t=th[k];
+    if((t.warnIf==='low'||t.warnIf==='range')&&v[k]<t.min)return true;
+    if((t.warnIf==='high'||t.warnIf==='range')&&v[k]>t.max)return true;
+  }
+  return false;
+}
+// เปิดแอพแล้วคำนวณกรอบชมพูใหม่จาก PM ล่าสุดที่มีค่าหลังล้าง — ทุกเครื่องเห็นตรงกัน และล้างกรอบเก่าที่เคยตัดสินจากค่าก่อนล้าง
+async function pmRecalcThreshFromLogs(){
+  try{
+    const res=await fetch(GS_PM+'?action=getLogs&t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const logs=(await res.json()).logs||[];
+    if(!logs.some(l=>'air_after' in l))return; // Apps Script ยังเป็นรุ่นเก่า (ไม่ส่งค่าที่วัด)
+    const num=x=>{const f=parseFloat(x);return isNaN(f)?null:f;};
+    const latest={};
+    logs.forEach(l=>{
+      const id=String(l.machine_id||'').trim(); if(!id)return;
+      const v={air:num(l.air_after),amp:num(l.amp_after),temp:num(l.temp_after)};
+      if(v.air==null&&v.amp==null&&v.temp==null)return; // รอบ M ไม่มีค่าที่วัด
+      latest[id]=v; // แถวล่างในชีต = ล่าสุด
+    });
+    let changed=0;
+    RAW.forEach((r,i)=>{
+      const v=latest[String(r[0]).trim()]; if(!v)return;
+      const type=String(r[3]||'').toUpperCase().indexOf('FCU')!==-1?'FCU':'AHU';
+      const bad=pmIsOutAfter(type,v);
+      if(bad&&!threshWarn[i]){threshWarn[i]=true;changed++;}
+      else if(!bad&&threshWarn[i]){delete threshWarn[i];changed++;}
+    });
+    if(changed){saveThreshWarn();render();}
+  }catch(e){console.warn('pmRecalcThreshFromLogs failed:',e.message);}
 }
 function pmCheckThresholds(){
   const warnings=pmGetThresholdWarnings();
@@ -2356,6 +2391,7 @@ function initApp(){
   const pmz=document.getElementById('pmZone');
   zonesSorted.forEach(zn=>{const o=document.createElement('option');o.value=zn;o.textContent='โซน '+zn;pmz.appendChild(o);});
   renderUserTable();
+  setTimeout(pmRecalcThreshFromLogs,1500); // ตรวจกรอบชมพูใหม่จากค่าหลังล้างในชีต PM
 
   // ── Event listeners (no inline onclick) ──
   document.getElementById('floorSel').addEventListener('change',applyFilter);
