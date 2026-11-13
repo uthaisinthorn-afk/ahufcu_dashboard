@@ -758,7 +758,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
       <div><label>ผู้ปฏิบัติงาน</label>
         <select class="pm-select" id="pm-operator">
           <option value="">-- เลือก --</option>
-          <option>อุทัย</option><option>Emerald nics</option><option>Techno</option>
+          <option>STB</option><option>Emerald nics</option><option>Techno</option>
         </select>
       </div>
       <div><label>วันที่</label><input class="pm-input" id="pm-date" type="date"></div>
@@ -2129,6 +2129,37 @@ function pmGetThresholdWarnings(){
   });
   return warnings;
 }
+// ── ข้อมูลประจำเครื่องจากชีต MACHINE_INFO (ครุภัณฑ์ / ขนาด-ชนิดฟิลเตอร์ / เบอร์สายพาน) ──
+// บันทึกครั้งแรกแล้ว ครั้งต่อไปทุกมือถือเปิดฟอร์มจะมีค่าเดิมให้ (แก้ได้ ส่งแล้วอัปเดตเป็นค่าล่าสุด)
+async function miSyncMachineInfo(){
+  try{
+    const res=await fetch(GS_PM+'?action=getMachineInfo&t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const j=await res.json();
+    if(!j||!j.info)return; // Apps Script รุ่นเก่า
+    const info=j.info;
+    RAW.forEach(r=>{
+      const m=info[String(r[0]).trim()]; if(!m)return;
+      if(m.asset!==undefined)r[1]=String(m.asset).indexOf('ไม่มี')>=0?'':m.asset;
+      if(m.filterSize)filterSizeMap[r[0]]=m.filterSize;
+      if(m.beltNo)beltNoMap[r[0]]=m.beltNo;
+      if(m.filterType)filterTypeMap[r[0]]=m.filterType;
+    });
+    saveFilterSizeMap();saveBeltNoMap();saveFilterTypeMap();
+    // ค่าที่เคยกรอกไว้เฉพาะในมือถือเครื่องนี้ แต่ยังไม่มีในชีต → ส่งขึ้นไปให้ทุกเครื่องเห็น (ครั้งเดียว)
+    const items=[];
+    new Set([...Object.keys(filterSizeMap),...Object.keys(beltNoMap),...Object.keys(filterTypeMap)]).forEach(id=>{
+      const m=info[id]||{},it={id};let any=false;
+      if(filterSizeMap[id]&&!m.filterSize){it.filterSize=filterSizeMap[id];any=true;}
+      if(beltNoMap[id]&&!m.beltNo){it.beltNo=beltNoMap[id];any=true;}
+      if(filterTypeMap[id]&&!m.filterType){it.filterType=filterTypeMap[id];any=true;}
+      if(any)items.push(it);
+    });
+    if(items.length)fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save_machine_info',items,by:currentUser?(currentUser.name||currentUser.username):''})}).catch(()=>{});
+    try{render();}catch(e){}
+  }catch(e){console.warn('miSyncMachineInfo failed:',e.message);}
+}
 // ค่าหลังล้าง {air,amp,temp} ผิดเกณฑ์หรือไม่ (ใช้คำนวณกรอบชมพูจากข้อมูลในชีต)
 function pmIsOutAfter(type,v){
   const th=PM_THRESHOLDS[type];
@@ -2311,7 +2342,7 @@ async function pmDoSubmit(){
   };
   try{await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
   catch(e){console.warn('GS sync failed:',e.message);}
-  if(checkSheetHtml)pmUploadCheckSheet(checkSheetHtml,r[0],payload.date,op);
+  if(checkSheetHtml)pmUploadCheckSheet(checkSheetHtml,r[0],payload.date,op,payload.contractor||'');
   if(['broken','deface','order'].includes(payload.work_status))
     pmReportToJobTracking(payload,[payload.photo_before,payload.photo_extra,payload.photo_machine,payload.photo_location,payload.photo_after,payload.photo_asset]);
 }
@@ -2329,7 +2360,7 @@ async function pmReportToJobTracking(p,photos){
     action:'reportFromPM',key:JOB_TRACKING_KEY,machine_id:p.machine_id,
     type:p.work_status==='deface'?'ตัดคอยล์ไปล้าง':'เครื่องจักรชำรุด',
     location:'ชั้น '+p.floor+(p.zone?' โซน '+p.zone:'')+' · '+(p.location||'-'),
-    detail,reporter:p.operator,status_label:p.status_label,
+    detail,reporter:p.operator,status_label:p.status_label,asset_no:p.asset_no||'',
     photos:photos.filter(Boolean).slice(0,3)
   };
   try{
@@ -2403,6 +2434,7 @@ function initApp(){
   zonesSorted.forEach(zn=>{const o=document.createElement('option');o.value=zn;o.textContent='โซน '+zn;pmz.appendChild(o);});
   renderUserTable();
   setTimeout(pmRecalcThreshFromLogs,1500); // ตรวจกรอบชมพูใหม่จากค่าหลังล้างในชีต PM
+  setTimeout(miSyncMachineInfo,800);       // ดึงเลขครุภัณฑ์/ฟิลเตอร์/สายพานที่บันทึกไว้ มาเติมฟอร์มอัตโนมัติ
 
   // ── Event listeners (no inline onclick) ──
   document.getElementById('floorSel').addEventListener('change',applyFilter);
@@ -3022,10 +3054,10 @@ async function pmHtmlToPdf(html){
   }finally{f.remove();}
 }
 // ส่ง Check Sheet PDF แยกจากฟอร์ม PM เพื่อไม่ให้ PDF ที่สร้างไม่สำเร็จกระทบการบันทึกฟอร์ม
-async function pmUploadCheckSheet(html,machineId,date,operator){
+async function pmUploadCheckSheet(html,machineId,date,operator,contractor){
   try{
     const pdf=await pmHtmlToPdf(html);
-    await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_check_sheet',machine_id:machineId,date,operator,pdf})});
+    await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_check_sheet',machine_id:machineId,date,operator,contractor:contractor||'',pdf})});
     showToast('📄 ส่ง Check Sheet PDF ไป Google Drive แล้ว');
   }catch(e){console.warn('Check Sheet PDF failed:',e.message);showToast('⚠️ สร้าง Check Sheet PDF ไม่สำเร็จ','warn');}
 }
