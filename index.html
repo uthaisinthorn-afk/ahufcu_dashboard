@@ -2231,9 +2231,11 @@ function pmToggleAllChecklist(checked){
 }
 
 const PHOTO_MAX_W=800,PHOTO_QUALITY=0.72;
-// รูปประจำเครื่อง (ช่อง 1-3: หน้าเครื่อง / ครุภัณฑ์ / สถานที่) — ดึงรูปล่าสุดที่เคยบันทึกมาแสดงให้อัตโนมัติ
+// รูปประจำเครื่อง (ช่อง 1-3 หน้าเครื่อง / ครุภัณฑ์ / สถานที่ + ช่อง 6 รูปเพิ่มเติม) — ดึงรูปล่าสุดที่เคยบันทึกมาแสดงให้อัตโนมัติ
+// ช่อง 4-5 (ก่อน/หลังทำ PM) ต้องถ่ายใหม่ทุกครั้ง
 // pmPhotoSaved[idx] = {url,date} ถ้าช่องนั้นใช้รูปเดิม · ถ่าย/อัปโหลดใหม่ = แทนที่รูปเดิม
-const pmPhotoSaved=[null,null,null];
+const PM_KEEP_SLOTS=[0,1,2,5];
+const pmPhotoSaved=[null,null,null,null,null,null];
 function pmMarkSaved(){
   pmPhotoSaved.forEach((s,idx)=>{
     const sl=document.getElementById('slot-'+idx);if(!sl)return;
@@ -2254,7 +2256,7 @@ async function pmLoadSavedPhotos(machineId){
     const cur=RAW[pmSelIdx];if(!cur||cur[0]!==machineId)return;   // เปลี่ยนเครื่องไปแล้ว
     let n=0;
     (j.photos||[]).forEach((p,idx)=>{
-      if(!p||!p.data||pmPhotos[idx])return;   // ผู้ใช้ถ่ายใหม่ไปก่อนแล้ว → ไม่ทับ
+      if(!p||!p.data||pmPhotos[idx]||!PM_KEEP_SLOTS.includes(idx))return;   // ผู้ใช้ถ่ายใหม่ไปก่อนแล้ว → ไม่ทับ
       pmPhotos[idx]=p.data;pmPhotoSaved[idx]={url:p.url,date:p.date||''};n++;
       const pv=document.getElementById('preview-'+idx);if(pv)pv.src=p.data;
       const sl=document.getElementById('slot-'+idx);if(sl)sl.classList.add('has-img');
@@ -2377,7 +2379,8 @@ async function pmDoSubmit(){
     // รูป 1-3: ใช้รูปเดิม = ส่งลิงก์เดิม (ไม่อัปโหลดซ้ำ) · รูปใหม่ = ส่งไฟล์รูป
     photo_machine:pmPhotoSaved[0]?'':(pmPhotos[0]||''),photo_asset:pmPhotoSaved[1]?'':(pmPhotos[1]||''),photo_location:pmPhotoSaved[2]?'':(pmPhotos[2]||''),
     photo_machine_url:pmPhotoSaved[0]?pmPhotoSaved[0].url:'',photo_asset_url:pmPhotoSaved[1]?pmPhotoSaved[1].url:'',photo_location_url:pmPhotoSaved[2]?pmPhotoSaved[2].url:'',
-    photo_before:pmPhotos[3]||'',photo_after:pmPhotos[4]||'',photo_extra:pmPhotos[5]||''
+    photo_before:pmPhotos[3]||'',photo_after:pmPhotos[4]||'',
+    photo_extra:pmPhotoSaved[5]?'':(pmPhotos[5]||''),photo_extra_url:pmPhotoSaved[5]?pmPhotoSaved[5].url:''
   };
   const snap=pmPhotos.slice();   // รูปทั้ง 6 ช่อง (รวมรูปเดิม) สำหรับส่งเข้าระบบติดตามงาน
   try{await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
