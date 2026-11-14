@@ -2019,6 +2019,8 @@ function openPMPanel(i){
     ['pm-cam-','pm-gal-'].forEach(p=>{const fi=document.getElementById(p+idx);if(fi)fi.value='';});
   });
   document.getElementById('pm-photo-status').textContent='';
+  pmPhotoSaved.fill(null);pmMarkSaved();
+  pmLoadSavedPhotos(r[0]);
   document.getElementById('pm-success-banner').classList.remove('show');
   document.getElementById('pm-submit-btn').textContent='📤 ส่งแบบฟอร์ม PM';
   document.getElementById('pm-submit-btn').disabled=false;
@@ -2229,8 +2231,42 @@ function pmToggleAllChecklist(checked){
 }
 
 const PHOTO_MAX_W=800,PHOTO_QUALITY=0.72;
+// รูปประจำเครื่อง (ช่อง 1-3: หน้าเครื่อง / ครุภัณฑ์ / สถานที่) — ดึงรูปล่าสุดที่เคยบันทึกมาแสดงให้อัตโนมัติ
+// pmPhotoSaved[idx] = {url,date} ถ้าช่องนั้นใช้รูปเดิม · ถ่าย/อัปโหลดใหม่ = แทนที่รูปเดิม
+const pmPhotoSaved=[null,null,null];
+function pmMarkSaved(){
+  pmPhotoSaved.forEach((s,idx)=>{
+    const sl=document.getElementById('slot-'+idx);if(!sl)return;
+    let tag=sl.querySelector('.pm-saved-tag');
+    if(!s){if(tag)tag.remove();return;}
+    if(!tag){tag=document.createElement('div');tag.className='pm-saved-tag';
+      tag.style.cssText='font-size:11.5px;color:#a5b4fc;padding:0 12px 10px;line-height:1.4';sl.appendChild(tag);}
+    tag.textContent='🗂 รูปเดิมที่บันทึกไว้'+(s.date?' ('+s.date+')':'')+' — ถ่าย/อัปโหลดใหม่เพื่อแทนที่';
+  });
+}
+async function pmLoadSavedPhotos(machineId){
+  if(!machineId||!GS_PM)return;
+  const ps=document.getElementById('pm-photo-status');
+  ps.textContent='⏳ กำลังโหลดรูปเดิมของเครื่องนี้...';ps.className='pm-photo-status';
+  try{
+    const res=await fetch(GS_PM+'?action=getMachinePhotos&id='+encodeURIComponent(machineId)+'&t='+Date.now(),{cache:'no-store'});
+    const j=await res.json();
+    const cur=RAW[pmSelIdx];if(!cur||cur[0]!==machineId)return;   // เปลี่ยนเครื่องไปแล้ว
+    let n=0;
+    (j.photos||[]).forEach((p,idx)=>{
+      if(!p||!p.data||pmPhotos[idx])return;   // ผู้ใช้ถ่ายใหม่ไปก่อนแล้ว → ไม่ทับ
+      pmPhotos[idx]=p.data;pmPhotoSaved[idx]={url:p.url,date:p.date||''};n++;
+      const pv=document.getElementById('preview-'+idx);if(pv)pv.src=p.data;
+      const sl=document.getElementById('slot-'+idx);if(sl)sl.classList.add('has-img');
+    });
+    pmMarkSaved();
+    ps.textContent=n?'🗂 ใช้รูปเดิม '+n+' รูป (ถ่ายใหม่ได้ถ้ามีการปรับปรุง)':'';
+    ps.className='pm-photo-status'+(n?' done':'');
+  }catch(e){ps.textContent='';console.warn('load saved photos:',e.message);}
+}
 function pmPhotoClear(idx){
   pmPhotos[idx]=null;
+  if(idx<pmPhotoSaved.length){pmPhotoSaved[idx]=null;pmMarkSaved();}
   const pv=document.getElementById('preview-'+idx);if(pv)pv.src='';
   const sl=document.getElementById('slot-'+idx);if(sl)sl.classList.remove('has-img');
   document.getElementById('pm-photo-status').textContent='';
@@ -2250,6 +2286,7 @@ function pmPhotoSelected(idx,input){
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       const b64=canvas.toDataURL('image/jpeg',PHOTO_QUALITY);
       pmPhotos[idx]=b64;
+      if(idx<pmPhotoSaved.length){pmPhotoSaved[idx]=null;pmMarkSaved();}   // รูปใหม่แทนที่รูปเดิม
       const pv=document.getElementById('preview-'+idx);if(pv)pv.src=b64;
       const sl=document.getElementById('slot-'+idx);if(sl)sl.classList.add('has-img');
       const kb=Math.round(b64.length*0.75/1024);
@@ -2337,14 +2374,17 @@ async function pmDoSubmit(){
     air_before:pmRound==='M'?'':document.getElementById('pm-air-before').value,air_after:pmRound==='M'?'':document.getElementById('pm-air-after').value,
     amp_before:pmRound==='M'?'':document.getElementById('pm-amp-before').value,amp_after:pmRound==='M'?'':document.getElementById('pm-amp-after').value,
     temp_before:pmRound==='M'?'':document.getElementById('pm-temp-before').value,temp_after:pmRound==='M'?'':document.getElementById('pm-temp-after').value,
-    photo_machine:pmPhotos[0]||'',photo_asset:pmPhotos[1]||'',photo_location:pmPhotos[2]||'',
+    // รูป 1-3: ใช้รูปเดิม = ส่งลิงก์เดิม (ไม่อัปโหลดซ้ำ) · รูปใหม่ = ส่งไฟล์รูป
+    photo_machine:pmPhotoSaved[0]?'':(pmPhotos[0]||''),photo_asset:pmPhotoSaved[1]?'':(pmPhotos[1]||''),photo_location:pmPhotoSaved[2]?'':(pmPhotos[2]||''),
+    photo_machine_url:pmPhotoSaved[0]?pmPhotoSaved[0].url:'',photo_asset_url:pmPhotoSaved[1]?pmPhotoSaved[1].url:'',photo_location_url:pmPhotoSaved[2]?pmPhotoSaved[2].url:'',
     photo_before:pmPhotos[3]||'',photo_after:pmPhotos[4]||'',photo_extra:pmPhotos[5]||''
   };
+  const snap=pmPhotos.slice();   // รูปทั้ง 6 ช่อง (รวมรูปเดิม) สำหรับส่งเข้าระบบติดตามงาน
   try{await fetch(GS_PM,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});}
   catch(e){console.warn('GS sync failed:',e.message);}
   if(checkSheetHtml)pmUploadCheckSheet(checkSheetHtml,r[0],payload.date,op,payload.contractor||'');
   if(['broken','deface','order'].includes(payload.work_status))
-    pmReportToJobTracking(payload,[payload.photo_before,payload.photo_extra,payload.photo_machine,payload.photo_location,payload.photo_after,payload.photo_asset]);
+    pmReportToJobTracking(payload,[snap[3]||'',snap[5]||'',snap[0]||'',snap[2]||'',snap[4]||'',snap[1]||'']);
 }
 
 // ส่งเรื่องเข้าระบบติดตามงาน ให้หัวหน้าช่างรับเรื่อง (ถ้าเครื่องนี้มีเรื่องค้างอยู่ ฝั่งนั้นจะบันทึกต่อในเรื่องเดิม)
